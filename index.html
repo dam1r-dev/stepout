@@ -12,6 +12,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <style>
 #map{height:380px;width:100%;background:#111}
+#map .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.85) saturate(.6)}
 .mk{width:26px;height:26px;border-radius:50%;background:#5fd39a;color:#000;font:700 12px Manrope,sans-serif;display:flex;align-items:center;justify-content:center;border:2px solid #000;box-shadow:0 0 0 2px #5fd39a}
 .leaflet-popup-content{font-family:Manrope,sans-serif}
 :root{--bg:#0b110e;--card:#111a15;--line:#1f2d25;--txt:#f2f2f2;--mut:#9a9a9a;--acc:#5fd39a;--warn:#ffb347;--bad:#ff6b6b;--ok:#8be3b5}
@@ -467,8 +468,8 @@ function drawMap(route){
  var el=$("#map");if(!el)return;
  if(typeof L==="undefined"){el.innerHTML='<div class="empty" style="border:0">Карта не загрузилась — проверьте интернет. Маршрут ниже.</div>';return}
  if(map){map.remove();map=null}
- map=L.map(el,{scrollWheelZoom:false});
- L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{maxZoom:19,subdomains:"abcd",attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'}).addTo(map);
+ map=L.map(el,{scrollWheelZoom:false});map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
+ L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
  PLACES.forEach(function(p){
   if(route.some(function(r){return r.p.id===p.id}))return;
   L.circleMarker([p.lat,p.lng],{radius:5,color:"#555",fillColor:"#777",fillOpacity:.8,weight:1}).addTo(map).bindTooltip(p.n);
