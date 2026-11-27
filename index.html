@@ -932,8 +932,9 @@ $("#modal").addEventListener("click",function(e){if(e.target===this)this.classLi
   if(pts.length<2){qmap.setView(pts[0],15);return}
   qmap.fitBounds(L.latLngBounds(pts),{padding:[40,40]});
   var m=qmap;
-  fetch("https://routing.openstreetmap.de/routed-foot/route/v1/driving/"+list.map(function(p){return p.lng+","+p.lat}).join(";")+"?overview=full&geometries=geojson")
-   .then(function(r){if(!r.ok)throw 0;return r.json()})
+  var url="https://routing.openstreetmap.de/routed-foot/route/v1/driving/"+list.map(function(p){return p.lng+","+p.lat}).join(";")+"?overview=full&geometries=geojson";
+  function get(n){return fetch(url).then(function(r){if(!r.ok)throw 0;return r.json()}).catch(function(e){if(n>0)return new Promise(function(ok){setTimeout(ok,1100)}).then(function(){return get(n-1)});throw e})}
+  get(4)
    .then(function(d){if(m!==qmap||!d.routes||!d.routes[0])return;m.removeLayer(line);L.polyline(d.routes[0].geometry.coordinates.map(function(c){return[c[1],c[0]]}),{color:"#5fd39a",weight:4,dashArray:"2 10",lineCap:"round"}).addTo(m)})
    .catch(function(){});
  }
