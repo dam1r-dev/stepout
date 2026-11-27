@@ -8,7 +8,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <style>
+#map{height:380px;width:100%;background:#111}
+.mk{width:26px;height:26px;border-radius:50%;background:#c8ff3d;color:#000;font:700 12px Manrope,sans-serif;display:flex;align-items:center;justify-content:center;border:2px solid #000;box-shadow:0 0 0 2px #c8ff3d}
+.leaflet-popup-content{font-family:Manrope,sans-serif}
 :root{--bg:#0a0a0a;--card:#141414;--line:#262626;--txt:#f2f2f2;--mut:#9a9a9a;--acc:#c8ff3d;--warn:#ffb347;--bad:#ff6b6b;--ok:#5ee08a}
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -186,8 +191,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 
 <section id="demo"><div class="wrap">
  <div class="eyebrow">Интерактивное демо</div>
- <h2>Соберите свой маршрут</h2>
- <p class="lead">Выберите время, интересы и условия — StepOut построит прогулку, обойдёт очереди и перестроит план, если что-то пойдёт не так.</p>
+ <h2>Соберите свой маршрут по Алматы</h2>
+ <p class="lead">Музеи, Кок-Тобе, Медеу, Шымбулак, БАО, Зелёный базар и локальные точки. Выберите время, интересы и условия — StepOut построит прогулку, обойдёт очереди и перестроит план, если что-то пойдёт не так.</p>
  <div class="demo">
   <div class="panel">
    <label>Сколько у вас времени</label>
@@ -314,7 +319,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 
 <footer><div class="wrap">
  <div><span class="logo">Step<span style="color:var(--acc)">Out</span></span><br>Учебный проект команды из пяти студентов.</div>
- <div>Демо работает на тестовых данных — без реальных покупок.</div>
+ <div>Демо: места Алматы реальные, цены, очереди и бонусы — условные. Без реальных покупок.</div>
 </div></footer>
 
 <div class="modal" id="modal"><div class="box">
@@ -329,22 +334,31 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 <script>
 (function(){
 "use strict";
-// Демо-данные: вымышленные места условного города
+// Демо-данные: Алматы (цены, очереди и бонусы — условные, для демонстрации)
+var START={lat:43.2405,lng:76.9565,n:"Старт: пр. Абая / Достык"};
 var PLACES=[
- {id:1,n:"Музей истории города",t:"culture",in:true,d:60,p:2,q:40,tk:1500,x:220,y:150,st:"Здание музея — бывшее купеческое собрание, где в XIX веке проходили ярмарочные балы."},
- {id:2,n:"Галерея современного искусства",t:"culture",in:true,d:50,p:2,q:20,tk:1200,x:420,y:110,st:"Галерею открыли в старой типографии — станки до сих пор стоят в фойе."},
- {id:3,n:"Старый театр (экскурсия за кулисы)",t:"culture",in:true,d:45,p:3,q:15,tk:3000,x:540,y:230,st:"За кулисами сохранилась деревянная машинерия сцены возрастом больше века."},
- {id:4,n:"Кофейня «Зерно» — локальная обжарка",t:"food",in:true,d:30,p:1,q:5,tk:0,x:300,y:240,bn:"−15% по StepOut",st:"Обжарщик вернулся из стажировки и привёз свой рецепт эспрессо."},
- {id:5,n:"Гастро-рынок",t:"food",in:true,d:45,p:2,q:10,tk:0,x:610,y:120,bn:"Дегустация в подарок",st:"Рынок работает на этом месте больше ста лет."},
- {id:6,n:"Чайхана во дворике",t:"food",in:false,d:40,p:1,q:0,tk:0,x:140,y:300,bn:"Чай к обеду бесплатно",st:"Дворик скрыт от улицы — местные называют его «секретным»."},
- {id:7,n:"Городской парк и ботанический сад",t:"nature",in:false,d:50,p:1,q:0,tk:0,x:360,y:60,eco:"Тропа с питьевым фонтанчиком и санузлом",st:"В саду растут деревья, посаженные первыми жителями города."},
- {id:8,n:"Смотровая на холме",t:"nature",in:false,d:40,p:1,q:15,tk:0,x:690,y:300,eco:"Подъём пешком вместо канатки — −0,4 кг CO₂",st:"Отсюда видно весь старый город и русло реки."},
- {id:9,n:"Мастерская керамики",t:"local",in:true,d:60,p:2,q:0,tk:4000,x:480,y:320,bn:"−10% на мастер-класс",st:"Мастер работает на гончарном круге, который собрал сам."},
- {id:10,n:"Улица ремёсел",t:"local",in:false,d:35,p:1,q:0,tk:0,x:200,y:60,bn:"Сувенир за чек-ин",st:"Каждая вывеска на улице нарисована вручную."},
- {id:11,n:"Эко-ферма на окраине",t:"eco",in:false,d:60,p:2,q:0,tk:2000,x:760,y:190,eco:"Лимит 30 гостей/час — бережём локацию",st:"Ферма выращивает овощи без пестицидов и принимает компост от горожан."},
- {id:12,n:"Пешая эко-тропа вдоль реки",t:"eco",in:false,d:45,p:1,q:0,tk:0,x:90,y:180,eco:"Маршрут без авто · точки сортировки мусора",st:"Тропу проложили волонтёры, расчистив берег от 3 тонн мусора."},
- {id:13,n:"Аудиоспектакль одной улицы",t:"local",in:false,d:30,p:1,q:0,tk:800,x:560,y:40,st:"Голоса жителей рассказывают историю улицы — дом за домом."},
- {id:14,n:"Крытый эко-маркет",t:"eco",in:true,d:30,p:1,q:5,tk:0,x:250,y:330,eco:"Продукты без пластика",bn:"Многоразовая сумка в подарок",st:"Маркет принимает тару и даёт за неё бонусы."}
+ {id:1,n:"Центральный государственный музей РК",t:"culture",in:true,d:60,p:2,q:40,tk:1500,lat:43.2369,lng:76.9502,st:"Одна из главных находок коллекции — копия «Золотого человека», сакского воина из кургана Иссык."},
+ {id:2,n:"Музей искусств им. Кастеева",t:"culture",in:true,d:50,p:2,q:20,tk:1200,lat:43.2353,lng:76.9179,st:"Музей назван в честь Абылхана Кастеева — первого профессионального казахского художника-живописца."},
+ {id:3,n:"Театр оперы и балета им. Абая",t:"culture",in:true,d:45,p:3,q:15,tk:3000,lat:43.2486,lng:76.9458,st:"Здание театра 1941 года украшено национальным орнаментом — это один из символов советского Алматы."},
+ {id:4,n:"Локальная кофейня у Арбата (партнёр)",t:"food",in:true,d:30,p:1,q:5,tk:0,lat:43.2552,lng:76.9447,bn:"−15% по StepOut",st:"Пешеходная улица Жибек Жолы — «Арбат» — главная прогулочная улица центра города."},
+ {id:5,n:"Зелёный базар",t:"food",in:true,d:45,p:2,q:10,tk:0,lat:43.2645,lng:76.9545,bn:"Дегустация курта и сухофруктов",st:"Зелёный базар — главный рынок города: здесь пробуют курт, казы, апорт и сухофрукты."},
+ {id:6,n:"Чайхана в старом дворике (партнёр)",t:"food",in:false,d:40,p:1,q:0,tk:0,lat:43.2475,lng:76.9330,bn:"Чай к обеду бесплатно",st:"Старые одноэтажные дворики в центре — то, что осталось от Верного, предшественника Алматы."},
+ {id:7,n:"Главный ботанический сад",t:"nature",in:false,d:50,p:1,q:0,tk:500,lat:43.2215,lng:76.9135,eco:"Тропа с питьевым фонтанчиком и санузлом",st:"Сад основан в 1932 году — здесь растут тысячи видов растений, включая дикую яблоню Сиверса."},
+ {id:8,n:"Кок-Тобе",t:"nature",in:false,d:60,p:1,q:30,tk:0,lat:43.2330,lng:76.9775,eco:"Подъём по тропе вместо авто — −0,6 кг CO₂",st:"Со смотровой Кок-Тобе видно весь город и телебашню высотой 372 метра."},
+ {id:9,n:"Мастерская керамики (партнёр)",t:"local",in:true,d:60,p:2,q:0,tk:4000,lat:43.2440,lng:76.9290,bn:"−10% на мастер-класс",st:"Казахская керамика традиционно украшается орнаментом «қошқар мүйіз» — бараньи рога."},
+ {id:10,n:"Парк 28 гвардейцев-панфиловцев",t:"local",in:false,d:35,p:1,q:0,tk:0,lat:43.2587,lng:76.9531,bn:"Бейдж за чек-ин",st:"В парке стоит Вознесенский собор 1907 года — деревянный храм, переживший землетрясение 1911 года."},
+ {id:11,n:"Терренкур вдоль реки Есентай",t:"eco",in:false,d:45,p:1,q:0,tk:0,lat:43.2210,lng:76.9330,eco:"Маршрут без авто · точки сортировки мусора",st:"Терренкур — пешеходно-велосипедная тропа вдоль горной реки, текущей с гор Заилийского Алатау."},
+ {id:12,n:"Центральный парк им. Горького",t:"eco",in:false,d:50,p:1,q:0,tk:0,lat:43.2615,lng:76.9705,eco:"Аренда велосипеда вместо такси",st:"Парку больше 150 лет — его заложили ещё в городе Верном."},
+ {id:13,n:"Аудиопрогулка по Жибек Жолы",t:"local",in:false,d:30,p:1,q:0,tk:800,lat:43.2600,lng:76.9450,st:"Название улицы переводится как «Шёлковый путь» — Алматы был одной из его точек."},
+ {id:14,n:"Эко-маркет без пластика (партнёр)",t:"eco",in:true,d:30,p:1,q:5,tk:0,lat:43.2385,lng:76.9300,eco:"Продукты без пластика",bn:"Многоразовая сумка в подарок",st:"Маркет принимает свою тару и начисляет за неё бонусы."},
+ {id:15,pop:1,n:"Площадь Республики и Монумент Независимости",t:"culture",in:false,d:30,p:1,q:0,tk:0,lat:43.2383,lng:76.9455,st:"Монумент Независимости увенчан фигурой Золотого человека на крылатом барсе."},
+ {id:16,pop:1,n:"Центральная мечеть Алматы",t:"culture",in:true,d:30,p:1,q:0,tk:0,lat:43.2692,lng:76.9520,st:"Мечеть с голубым куполом вмещает несколько тысяч человек; при входе соблюдайте дресс-код."},
+ {id:17,pop:1,n:"Медеу",t:"nature",in:false,d:60,p:1,q:15,tk:0,lat:43.1575,lng:77.0590,eco:"Экобус вместо такси · не сходите с троп",st:"Медеу — высокогорный каток на высоте около 1700 м, где установлено множество мировых рекордов."},
+ {id:18,pop:1,n:"Шымбулак (канатная дорога)",t:"nature",in:false,d:90,p:3,q:45,tk:9000,lat:43.1280,lng:77.0800,eco:"Канатка с Медеу вместо подъёма на авто",st:"Горнолыжный курорт Шымбулак поднимает гостей на высоту больше 3000 метров."},
+ {id:19,pop:1,n:"Большое Алматинское озеро",t:"eco",in:false,d:90,p:2,q:0,tk:0,lat:43.0510,lng:76.9850,eco:"Лимит потока · купаться и мусорить нельзя",st:"Бирюзовое озеро на высоте 2500 м — источник питьевой воды для города."},
+ {id:20,pop:1,n:"Парк Первого Президента",t:"nature",in:false,d:50,p:1,q:0,tk:0,lat:43.1895,lng:76.8855,eco:"Велодорожки и фонтаны с питьевой водой",st:"Один из крупнейших парков города с видом на горы Заилийского Алатау."},
+ {id:21,pop:1,n:"Музей народных музыкальных инструментов",t:"culture",in:true,d:45,p:1,q:10,tk:1000,lat:43.2588,lng:76.9560,st:"Здесь можно услышать домбру, кобыз и сыбызгы — а сам музей стоит в деревянном здании начала XX века."},
+ {id:22,pop:1,n:"Арбат — пешеходная Жибек Жолы",t:"local",in:false,d:30,p:1,q:0,tk:0,lat:43.2598,lng:76.9420,bn:"Скидки у уличных художников",st:"На Арбате играют уличные музыканты и продают картины местных художников."}
 ];
 var MOVE={walk:{k:1,name:"пешком",co2:0},bike:{k:.6,name:"на велосипеде",co2:0},car:{k:.45,name:"на авто",co2:1}};
 var state={route:[],opts:null,rerouted:0};
@@ -378,8 +392,8 @@ function readOpts(){
   mode:$("#mode .chip.on").dataset.v
  }
 }
-function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
-function travel(a,b,mode){var base=Math.round(dist(a,b)/14);var m=Math.max(5,Math.round(base*MOVE[mode].k));if(mode==="car")m+=8;return m}
+function dist(a,b){var R=6371,r=Math.PI/180,dl=(b.lat-a.lat)*r,dg=(b.lng-a.lng)*r;var h=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dg/2)*Math.sin(dg/2);return 2*R*Math.asin(Math.sqrt(h))*1.3}
+function travel(a,b,mode){var base=dist(a,b)*12;var m=Math.max(5,Math.round(base*MOVE[mode].k));if(mode==="car")m+=8;return m}
 
 function score(p,o){
  var s=0;
@@ -388,6 +402,7 @@ function score(p,o){
  if(o.rain&&!p.in)s-=(p.t==="nature"||p.t==="eco")?12:6;
  if(o.rain&&p.in)s+=3;
  if(p.bn)s+=1;
+ if(p.pop)s+=3;
  return s;
 }
 
@@ -395,11 +410,11 @@ function build(o,exclude){
  exclude=exclude||[];
  var total=o.hours*60,start=10*60;
  var pool=PLACES.filter(function(p){return exclude.indexOf(p.id)<0&&score(p,o)>-5}).sort(function(a,b){return score(b,o)-score(a,o)});
- var route=[],used=0,cur={x:400,y:200};
+ var route=[],used=0,cur=START;
  // жадный выбор: лучший по скору с учётом близости
  while(pool.length){
   var best=null,bv=-1e9;
-  pool.forEach(function(p){var v=score(p,o)*10-dist(cur,p)/8;if(v>bv){bv=v;best=p}});
+  pool.forEach(function(p){var v=score(p,o)*10-dist(cur,p)*(o.mode==="car"?3:8);if(v>bv){bv=v;best=p}});
   var tr=travel(cur,best,o.mode);
   if(used+tr+best.d>total){pool.splice(pool.indexOf(best),1);continue}
   route.push({p:best,tr:tr});used+=tr+best.d;cur=best;
@@ -447,21 +462,25 @@ function qrSVG(seed){
  return '<svg viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><g fill="#000">'+s+finder(0,0)+finder(18,0)+finder(0,18)+'</g></svg>';
 }
 
-function mapSVG(route){
- var pts=[{x:400,y:200}].concat(route.map(function(r){return r.p}));
- var all=PLACES.map(function(p){
-  var on=route.some(function(r){return r.p.id===p.id});
-  return on?"":'<circle cx="'+p.x+'" cy="'+p.y+'" r="4" fill="#3a3a3a"/>';
- }).join("");
- var line=pts.map(function(p){return p.x+","+p.y}).join(" ");
- var marks=route.map(function(r,i){
-  return '<g><circle cx="'+r.p.x+'" cy="'+r.p.y+'" r="13" fill="#c8ff3d"/><text x="'+r.p.x+'" y="'+(r.p.y+4)+'" text-anchor="middle" font-size="12" font-weight="700" fill="#000" font-family="Manrope,sans-serif">'+(i+1)+'</text></g>';
- }).join("");
- var grid="";for(var gx=0;gx<=840;gx+=60)grid+='<line x1="'+gx+'" y1="0" x2="'+gx+'" y2="380" stroke="#181818"/>';for(var gy=0;gy<=380;gy+=60)grid+='<line x1="0" y1="'+gy+'" x2="840" y2="'+gy+'" stroke="#181818"/>';
- return '<svg viewBox="0 0 840 380" xmlns="http://www.w3.org/2000/svg">'+grid+
-  '<path d="M0 270 C 150 230, 260 360, 420 300 S 700 250, 840 330" stroke="#1d3a4a" stroke-width="18" fill="none"/>'+
-  all+'<polyline points="'+line+'" fill="none" stroke="#c8ff3d" stroke-width="3" stroke-dasharray="8 6" stroke-linecap="round"/>'+
-  '<circle cx="400" cy="200" r="8" fill="#fff"/><text x="400" y="225" text-anchor="middle" font-size="11" fill="#9a9a9a" font-family="Manrope,sans-serif">Вы здесь</text>'+marks+'</svg>';
+var map=null;
+function drawMap(route){
+ var el=$("#map");if(!el)return;
+ if(typeof L==="undefined"){el.innerHTML='<div class="empty" style="border:0">Карта не загрузилась — проверьте интернет. Маршрут ниже.</div>';return}
+ if(map){map.remove();map=null}
+ map=L.map(el,{scrollWheelZoom:false});
+ L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{maxZoom:19,subdomains:"abcd",attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'}).addTo(map);
+ PLACES.forEach(function(p){
+  if(route.some(function(r){return r.p.id===p.id}))return;
+  L.circleMarker([p.lat,p.lng],{radius:5,color:"#555",fillColor:"#777",fillOpacity:.8,weight:1}).addTo(map).bindTooltip(p.n);
+ });
+ var pts=[[START.lat,START.lng]].concat(route.map(function(r){return [r.p.lat,r.p.lng]}));
+ L.polyline(pts,{color:"#c8ff3d",weight:4,dashArray:"8 8"}).addTo(map);
+ L.circleMarker([START.lat,START.lng],{radius:8,color:"#fff",fillColor:"#fff",fillOpacity:1}).addTo(map).bindTooltip(START.n);
+ route.forEach(function(r,i){
+  var ic=L.divIcon({className:"",html:'<div class="mk">'+(i+1)+'</div>',iconSize:[26,26],iconAnchor:[13,13]});
+  L.marker([r.p.lat,r.p.lng],{icon:ic}).addTo(map).bindPopup("<b>"+esc(r.p.n)+"</b><br>"+fmt(r.arrive)+" – "+fmt(r.leave));
+ });
+ map.fitBounds(L.latLngBounds(pts),{padding:[30,30]});
 }
 
 function render(changedId,msg){
@@ -475,7 +494,7 @@ function render(changedId,msg){
   '<div class="stat"><b>'+(s.cost?money(s.cost):"0 ₸")+'</b><small>билеты</small></div>'+
   '<div class="stat"><b>'+(o.mode==="car"?"🚗":"−"+s.savedCo2.toFixed(1)+" кг")+'</b><small>'+(o.mode==="car"?"попробуйте пешком":"CO₂ vs авто")+'</small></div>'+
  '</div>';
- html+='<div class="mapbox">'+mapSVG(route)+'</div>';
+ html+='<div class="mapbox"><div id="map"></div></div>';
  html+='<div class="tl">';
  route.forEach(function(r,i){
   var p=r.p;
@@ -488,6 +507,7 @@ function render(changedId,msg){
    if(p.tk)html+='<span class="pill ok">Очередь в кассу '+r.qNow+' мин → 0 с QR</span>';
    else html+='<span class="pill warn">Очередь сейчас ~'+r.qNow+' мин</span><span class="pill ok">Лучшее окно: '+r.qBest+' мин</span>';
   } else html+='<span class="pill ok">Без очереди</span>';
+  if(p.pop)html+='<span class="pill">🔥 Топ Алматы</span>';
   if(p.bn)html+='<span class="pill">🎁 '+esc(p.bn)+'</span>';
   if(p.eco)html+='<span class="pill eco">🌱 '+esc(p.eco)+'</span>';
   if(o.rain&&!p.in)html+='<span class="pill warn">☔ возьмите зонт</span>';
@@ -503,6 +523,7 @@ function render(changedId,msg){
   '<button class="btn ghost" data-act="rain">🌧 Пошёл дождь</button>'+
  '</div>';
  box.innerHTML=html;
+ drawMap(route);
 }
 
 function doBuild(){
@@ -518,10 +539,10 @@ function replaceStop(id,reason){
  var usedIds=state.route.map(function(r){return r.p.id});
  var old=state.route[idx].p;
  var cand=PLACES.filter(function(p){return usedIds.indexOf(p.id)<0&&(!o.rain||p.in)&&p.p<=o.budget})
-  .sort(function(a,b){return (score(b,o)-dist(old,b)/40)-(score(a,o)-dist(old,a)/40)});
+  .sort(function(a,b){return (score(b,o)-dist(old,b)*1.5)-(score(a,o)-dist(old,a)*1.5)});
  if(!cand.length){render(null,"Подходящей замены рядом нет — оставили маршрут как есть.");return}
  var nw=cand[0];
- var prev=idx?state.route[idx-1].p:{x:400,y:200};
+ var prev=idx?state.route[idx-1].p:START;
  state.route[idx]={p:nw,tr:travel(prev,nw,o.mode)};
  if(state.route[idx+1])state.route[idx+1].tr=travel(nw,state.route[idx+1].p,o.mode);
  // если вылезли за лимит — убираем хвост
@@ -560,7 +581,7 @@ $("#result").addEventListener("click",function(e){
    var cand=PLACES.filter(function(p){return p.in&&usedIds.indexOf(p.id)<0&&p.p<=state.opts.budget}).sort(function(a,b){return dist(r.p,a)-dist(r.p,b)});
    if(cand.length){changed.push(r.p.n);usedIds.push(cand[0].id);r.p=cand[0]}
   });
-  var prev={x:400,y:200};state.route.forEach(function(r){r.tr=travel(prev,r.p,state.opts.mode);prev=r.p});
+  var prev=START;state.route.forEach(function(r){r.tr=travel(prev,r.p,state.opts.mode);prev=r.p});
   computeTimes(state.route,state.opts,600);
   while(state.route.length>1&&state.route[state.route.length-1].leave>600+state.opts.hours*60)state.route.pop();
   render(null,"Пошёл дождь: уличные точки ("+changed.length+") заменили на места под крышей.");
