@@ -120,6 +120,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
  .g3,.g4,.g5,.roadmap{grid-template-columns:repeat(2,1fr)}
  .demo{grid-template-columns:1fr}
  .panel{position:static}
+ #qrwrap{grid-template-columns:1fr!important;justify-items:center;text-align:center}
+ #qrwrap .cta{justify-content:center}
  .summary{grid-template-columns:repeat(2,1fr)}
 }
 @media(max-width:560px){
@@ -134,7 +136,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 <nav><div class="wrap">
  <a href="#top" class="logo">Step<span>Out</span></a>
  <div class="links">
-  <a href="#problem">Проблема</a><a href="#solution">Решение</a><a href="#demo">Демо</a><a href="#eco">Эко</a><a href="#business">Модель</a><a href="#team">Команда</a>
+  <a href="#problem">Проблема</a><a href="#solution">Решение</a><a href="#demo">Демо</a><a href="#eco">Эко</a><a href="#business">Модель</a><a href="#team">Команда</a><a href="#qr">QR</a>
  </div>
  <a href="#demo" class="btn sm">Попробовать демо</a>
 </div></nav>
@@ -315,7 +317,18 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
  <div class="flow">
   <div>MVP</div><i>→</i><div>Первые локальные и билетные партнёры</div><i>→</i><div>Пилот на живых туристах</div><i>→</i><div>Замер экономии времени и конверсии</div><i>→</i><div>Первые платные B2B-интеграции</div>
  </div>
- <div class="cta" style="margin-top:40px;display:flex;gap:12px;flex-wrap:wrap"><a href="#demo" class="btn">Попробовать демо</a><a href="#top" class="btn ghost">Наверх ↑</a></div>
+ <div class="cta" style="margin-top:40px;display:flex;gap:12px;flex-wrap:wrap"><a href="#demo" class="btn">Попробовать демо</a><a href="#qr" class="btn ghost">QR-код сайта</a></div>
+</div></section>
+
+<section id="qr"><div class="wrap" style="display:grid;grid-template-columns:1fr auto;gap:40px;align-items:center" id="qrwrap">
+ <div>
+  <div class="eyebrow">Откройте StepOut на телефоне</div>
+  <h2>Наведите камеру на QR-код</h2>
+  <p class="lead">Сайт и демо маршрута по Алматы откроются прямо в браузере телефона — без установки.</p>
+  <p style="margin-top:18px;font-family:Unbounded;font-size:18px;color:var(--acc)">dam1r-dev.github.io/stepout</p>
+  <div class="cta" style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap"><a href="qr.html" class="btn">Открыть QR на весь экран</a><a href="#top" class="btn ghost">Наверх ↑</a></div>
+ </div>
+ <img src="https://api.qrserver.com/v1/create-qr-code/?size=500x500&margin=10&data=https%3A%2F%2Fdam1r-dev.github.io%2Fstepout%2F" alt="QR-код на сайт StepOut" width="260" height="260" style="background:#fff;border-radius:20px;padding:14px;display:block">
 </div></section>
 
 <footer><div class="wrap">
