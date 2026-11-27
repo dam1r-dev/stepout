@@ -128,6 +128,18 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
  .stats{grid-template-columns:1fr}
  section{padding:64px 0}
 }
+.hero{min-height:calc(100vh - 60px);display:flex;align-items:center;background:#0b110e}
+.hero-bg{position:absolute;inset:0;background:url('https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Almaty_panoramic_view_from_Koktobe_at_sunset_-_panoramio.jpg/1920px-Almaty_panoramic_view_from_Koktobe_at_sunset_-_panoramio.jpg') center 60%/cover no-repeat;transform:scale(1.08);animation:kenburns 24s ease-in-out infinite alternate;z-index:0}
+.hero-bg:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,17,14,.92) 0%,rgba(11,17,14,.65) 45%,rgba(11,17,14,.25) 100%),linear-gradient(0deg,#0b110e 0%,rgba(11,17,14,0) 35%)}
+@keyframes kenburns{from{transform:scale(1.08) translate(0,0)}to{transform:scale(1.18) translate(-2%,-1%)}}
+.hero .wrap{position:relative;z-index:1;width:100%}
+.hero .stat{background:rgba(17,26,21,.6);backdrop-filter:blur(8px)}
+.photo-credit{position:absolute;right:14px;bottom:10px;z-index:1;font-size:11px;color:rgba(242,242,242,.55)}
+.photo-credit a{color:inherit}
+.scroll-hint{position:absolute;left:50%;bottom:22px;z-index:1;width:26px;height:42px;border:2px solid rgba(242,242,242,.5);border-radius:14px;transform:translateX(-50%)}
+.scroll-hint:after{content:"";position:absolute;left:50%;top:8px;width:4px;height:8px;margin-left:-2px;border-radius:2px;background:var(--acc);animation:wheel 1.6s ease-in-out infinite}
+@keyframes wheel{0%{opacity:0;transform:translateY(0)}30%{opacity:1}100%{opacity:0;transform:translateY(14px)}}
+@media(max-width:560px){.scroll-hint{display:none}}
 /* ===== animations ===== */
 .js .reveal{opacity:0;transform:translateY(28px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
 .js .reveal.in{opacity:1;transform:none}
@@ -189,12 +201,12 @@ document.addEventListener("DOMContentLoaded",function(){
 <nav><div class="wrap">
  <a href="#top" class="logo">Step<span>Out</span></a>
  <div class="links">
-  <a href="#problem">Проблема</a><a href="#solution">Решение</a><a href="#demo">Демо</a><a href="#eco">Эко</a><a href="#partners">Партнёрам</a><a href="#plan">План</a><a href="#qr">QR</a>
+  <a href="#problem">Проблема</a><a href="#solution">Решение</a><a href="#demo">Демо</a><a href="#eco">Эко</a><a href="#partners">Партнёрам</a><a href="#qr">QR</a>
  </div>
  <a href="#demo" class="btn sm">Попробовать демо</a>
 </div></nav>
 
-<header class="hero" id="top"><div class="wrap">
+<header class="hero" id="top"><div class="hero-bg" role="img" aria-label="Вечерний Алматы с Кок-Тобе"></div><div class="wrap">
  <div class="eyebrow">Тревел-компаньон · студенческий стартап</div>
  <h1>STEP<span>OUT</span></h1>
  <p class="sub">Адаптивный маршрутизатор городских прогулок с локальными открытиями</p>
@@ -208,7 +220,7 @@ document.addEventListener("DOMContentLoaded",function(){
   <div class="stat"><b>1 тап</b><small>чтобы перестроить сломанный план</small></div>
   <div class="stat"><b>90 сек</b><small>аудиоистории по пути</small></div>
  </div>
-</div></header>
+</div><a href="#problem" class="scroll-hint" aria-label="Листать вниз"></a><div class="photo-credit">Фото: <a href="https://commons.wikimedia.org/wiki/File:Almaty_panoramic_view_from_Koktobe_at_sunset_-_panoramio.jpg" target="_blank" rel="noopener">Igors Jefimovs</a>, CC BY 3.0</div></header>
 
 <section id="problem"><div class="wrap">
  <div class="eyebrow">Проблема</div>
@@ -359,15 +371,6 @@ document.addEventListener("DOMContentLoaded",function(){
    <a href="tel:+77057276368" class="btn ghost">Позвонить</a>
   </div>
  </div>
-</div></section>
-
-<section id="plan"><div class="wrap">
- <div class="eyebrow">План</div>
- <h2>Первые 90 дней</h2>
- <div class="flow">
-  <div>MVP</div><i>→</i><div>Первые локальные и билетные партнёры</div><i>→</i><div>Пилот на живых туристах</div><i>→</i><div>Замер экономии времени и конверсии</div><i>→</i><div>Первые платные B2B-интеграции</div>
- </div>
- <div class="cta" style="margin-top:40px;display:flex;gap:12px;flex-wrap:wrap"><a href="#demo" class="btn">Попробовать демо</a><a href="#qr" class="btn ghost">QR-код сайта</a></div>
 </div></section>
 
 <section id="qr"><div class="wrap" style="display:grid;grid-template-columns:1fr auto;gap:40px;align-items:center" id="qrwrap">
