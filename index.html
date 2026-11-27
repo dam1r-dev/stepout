@@ -445,7 +445,7 @@ document.addEventListener("DOMContentLoaded",function(){
 <section id="add-place"><div class="wrap">
  <div class="eyebrow">Добавить место</div>
  <h2>Знаете классное место? Поделитесь</h2>
- <p class="lead">Кофейня, мастерская, дворик или смотровая — добавьте, и место сразу появится в списке ниже и сможет попасть в ваш маршрут.</p>
+ <p class="lead">Кофейня, мастерская, дворик или смотровая — добавьте, и место сразу появится в списке ниже у всех посетителей и сможет попасть в маршрут.</p>
  <div class="flow"><div>1. Заполните форму</div><i>→</i><div>2. Отметьте точку на карте</div><i>→</i><div><b style="color:var(--acc)">3. Место на странице</b></div></div>
  <div class="addgrid">
   <form id="addForm" novalidate>
@@ -461,7 +461,7 @@ document.addEventListener("DOMContentLoaded",function(){
     <label>Где<select name="in"><option value="1">В помещении</option><option value="0">На улице</option></select></label>
    </div>
    <label>Описание *<textarea name="about" rows="3" maxlength="300" placeholder="Чем это место интересно?"></textarea></label>
-   <label>Фото<input type="file" id="addPhoto" accept="image/*"></label>
+   <label>Фото (видно только на вашем устройстве)<input type="file" id="addPhoto" accept="image/*"></label>
    <img id="addPreview" alt="Предпросмотр фото" hidden>
   </form>
   <div>
@@ -475,7 +475,7 @@ document.addEventListener("DOMContentLoaded",function(){
  </div>
  <h3 class="disp" style="margin-top:50px;font-size:20px">Добавленные места</h3>
  <div class="grid g3" id="userPlaces"><p style="color:var(--mut)">Пока пусто — добавьте первое место.</p></div>
- <p id="addNote" style="color:var(--mut);font-size:13px;margin-top:16px">Демо: добавленные вами места сохраняются в этом браузере.</p>
+ <p id="addNote" style="color:var(--mut);font-size:13px;margin-top:16px">Добавленные места видят все посетители сайта около 12 часов. Фото видно только автору.</p>
 </div></section>
 
 <section id="partners"><div class="wrap">
@@ -889,28 +889,29 @@ $("#modal").addEventListener("click",function(e){if(e.target===this)this.classLi
 (function(){
  var form=$("#addForm");if(!form)return;
  var KEY="stepout_places",point=null,amap=null,marker=null,photo="",reading=false,shared=[],common=[],lastId=0;
- // Общая база (Supabase). Сюда — Project URL и ПУБЛИЧНЫЙ ключ (publishable / anon). Секретный ключ вставлять нельзя.
- var DB={url:"",key:""};
- var online=/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(DB.url)&&!!DB.key&&DB.key.indexOf("sb_secret_")!==0;
- function api(query,opt){
-  opt=opt||{};var h={apikey:DB.key};
-  if(DB.key.indexOf("eyJ")===0)h.Authorization="Bearer "+DB.key;
-  if(opt.body){h["Content-Type"]="application/json";h.Prefer="return=representation"}
-  return fetch(DB.url.replace(/\/$/,"")+"/rest/v1/places"+query,{method:opt.body?"POST":"GET",headers:h,body:opt.body,cache:"no-store"})
-   .then(function(r){if(!r.ok)throw new Error(r.status);return r.json()});
+ // Общий список без регистрации: открытый канал ntfy.sh. Сообщения хранятся там около 12 часов, фото не передаются.
+ // Чтобы очистить общий список от спама — поменяйте название канала.
+ var CHANNEL="https://ntfy.sh/stepout-almaty-58a83d88568f04d7",GONE="stepout_gone",gone=[],es=null,seq=0;
+ try{var gv=JSON.parse(localStorage.getItem(GONE));if(Array.isArray(gv))gone=gv}catch(e){}
+ function cut(v,n){return typeof v==="string"?v.slice(0,n):""}
+ function receive(raw){
+  var m,r;try{m=JSON.parse(raw);if(m.event!=="message")return;r=JSON.parse(m.message)}catch(e){return}
+  if(!r||r.v!==1||typeof r.k!=="string"||!/^[a-z0-9]{6,32}$/.test(r.k)||common.length>=60)return;
+  function same(x){return x.k===r.k}
+  if(gone.indexOf(r.k)>=0||local.some(same)||common.some(same))return;
+  var t=/^\d{2}:\d{2}$/;
+  var x={id:5000+(++seq),k:r.k,n:cut(r.n,60).trim(),t:r.t,address:cut(r.address,100),about:cut(r.about,300),lat:r.lat,lng:r.lng,open:t.test(r.open)?r.open:"",close:t.test(r.close)?r.close:"",p:r.p,"in":!!r["in"]};
+  if(!valid(x)||x.lat<42.8||x.lat>43.6||x.lng<76.5||x.lng>77.4)return;
+  common.unshift(x);toRoute(x,x.id);draw();
  }
- function addCommon(rows){
-  rows.forEach(function(r){
-   var x={id:5000+(+r.id),n:r.name,t:r.type,address:r.address,about:r.about,lat:r.lat,lng:r.lng,open:r.open_time,close:r.close_time,p:r.price,"in":r.indoor,photo:r.photo};
-   if(!valid(x)||common.some(function(c){return c.id===x.id}))return;
-   common.push(x);toRoute(x,x.id);lastId=Math.max(lastId,+r.id);
-  });
-  common.sort(function(a,b){return b.id-a.id});
- }
- function refresh(){
-  return api("?select=*&order=id.desc&limit=60"+(lastId?"&id=gt."+lastId:"")).then(function(rows){
-   if(Array.isArray(rows)&&rows.length){addCommon(rows);draw()}
-  });
+ function note(text){$("#addNote").textContent=text}
+ function listen(on){
+  if(!on){if(es){es.close();es=null}return}
+  if(es||!window.EventSource)return;
+  es=new EventSource(CHANNEL+"/sse?since=all");
+  es.onopen=function(){note("Добавленные места видят все посетители сайта около 12 часов. Фото видно только автору.")};
+  es.onmessage=function(e){receive(e.data)};
+  es.onerror=function(){if(es&&es.readyState===2){es=null;note("Общий список сейчас недоступен — обновите страницу чуть позже.")}};
  }
  var TYPES={food:"Кафе и еда",culture:"Культура",nature:"Природа",local:"Локальное",eco:"Эко"};
  function clearPoint(){point=null;$("#addCoords").textContent="Точка не выбрана";if(marker){amap.removeLayer(marker);marker=null}}
@@ -974,9 +975,11 @@ $("#modal").addEventListener("click",function(e){if(e.target===this)this.classLi
  $("#userPlaces").addEventListener("click",function(e){
   var b=e.target.closest("[data-del]");if(!b)return;
   var id=+b.dataset.del;
+  local.forEach(function(x){if(x.id===id&&x.k)gone.push(x.k)});
+  try{localStorage.setItem(GONE,JSON.stringify(gone.slice(-100)))}catch(err){}
   local=local.filter(function(x){return x.id!==id});
   for(var i=PLACES.length-1;i>=0;i--)if(PLACES[i].id===id)PLACES.splice(i,1);
-  store();draw();$("#addDone").textContent="";
+  store();draw();$("#addDone").textContent="Удалено у вас. У других посетителей оно пропадёт примерно через 12 часов.";
  });
  $("#addSend").addEventListener("click",function(){
   var f=form.elements,err=$("#addErr");
@@ -991,29 +994,34 @@ $("#modal").addEventListener("click",function(e){if(e.target===this)this.classLi
    $("#addDone").textContent="✅ Место «"+d.n+"» добавлено."+note;
    $("#userPlaces").scrollIntoView({behavior:"smooth",block:"start"});
   }
-  if(online){
-   var btn=$("#addSend");btn.disabled=true;$("#addDone").textContent="Отправляем…";
-   api("",{body:JSON.stringify({name:d.n,type:d.t,address:d.address,about:d.about,lat:d.lat,lng:d.lng,open_time:d.open,close_time:d.close,price:d.p,indoor:d["in"],photo:d.photo})})
-    .then(function(rows){
-     // подтягиваем и чужие новые места, не пропуская их из-за нашего id
-     return refresh().catch(function(){}).then(function(){addCommon(rows);done(" Его уже видят все посетители.")});
-    })
-    .catch(function(e){$("#addDone").textContent="";err.textContent=e&&e.message==="400"?"База не приняла место: проверьте, что точка находится в районе Алматы.":"Не получилось отправить — проверьте интернет и нажмите ещё раз."})
-    .then(function(){btn.disabled=false});
-   return;
-  }
   d.id=Math.max(Date.now(),2000);
-  local.push(d);toRoute(d,d.id);
-  var note="";
-  if(!store()){d.photo="";note=store()?" Фото не поместилось в память браузера и после перезагрузки пропадёт.":" Браузер не даёт сохранить — после перезагрузки место пропадёт.";d.photo=photo}
-  done(note);
+  d.k=(Math.random().toString(36).slice(2,10)+Date.now().toString(36)).replace(/[^a-z0-9]/g,"");
+  var body=JSON.stringify({v:1,k:d.k,n:d.n,t:d.t,address:d.address,about:d.about,lat:d.lat,lng:d.lng,open:d.open,close:d.close,p:d.p,"in":d["in"]});
+  if(window.TextEncoder&&new TextEncoder().encode(body).length>3800){err.textContent="Слишком длинный текст — сократите описание.";return}
+  var btn=$("#addSend");btn.disabled=true;$("#addDone").textContent="Отправляем…";
+  // записываем у себя до отправки, чтобы своё сообщение из канала не задвоилось
+  local.push(d);
+  fetch(CHANNEL,{method:"POST",body:body}).then(function(r){
+   if(!r.ok)throw new Error(r.status);
+   toRoute(d,d.id);
+   var extra=" Его уже видят все посетители."+(d.photo?" Фото видно только вам.":"");
+   if(!store()){var ph=d.photo;d.photo="";if(!store())extra+=" У вас в браузере оно после перезагрузки не сохранится.";d.photo=ph}
+   done(extra);
+  }).catch(function(e){
+   local=local.filter(function(x){return x!==d});
+   $("#addDone").textContent="";
+   err.textContent=e&&e.message==="429"?"Слишком много запросов из этой сети — подождите минуту и нажмите ещё раз.":"Не получилось отправить — проверьте интернет и нажмите ещё раз.";
+  }).then(function(){btn.disabled=false});
  });
  draw();
- if(online){
-  $("#addNote").textContent="Добавленные места видят все посетители сайта.";
-  refresh().catch(function(){$("#addNote").textContent="Не удалось загрузить общий список — обновите страницу."});
-  setInterval(function(){if(!document.hidden)refresh().catch(function(){})},20000);
- }
+ if("IntersectionObserver" in window){
+  var seen={};
+  var io=new IntersectionObserver(function(list){
+   list.forEach(function(e){seen[e.target.id]=e.isIntersecting});
+   listen(!!(seen.demo||seen["add-place"]));
+  },{rootMargin:"200px"});
+  io.observe($("#demo"));io.observe($("#add-place"));
+ } else listen(true);
  // общие места, видимые всем посетителям (файл places.json)
  if(window.fetch)fetch("places.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():[]}).then(function(list){
   if(!Array.isArray(list))return;
