@@ -546,8 +546,9 @@ function drawMap(route){
  var prof={walk:"routed-foot",bike:"routed-bike",car:"routed-car"}[state.opts.mode];
  var coords=pts.map(function(p){return p[1]+","+p[0]}).join(";");
  var myMap=map;
- if(window.fetch&&pts.length>1)fetch("https://routing.openstreetmap.de/"+prof+"/route/v1/driving/"+coords+"?overview=full&geometries=geojson")
-  .then(function(r){return r.json()})
+ var url="https://routing.openstreetmap.de/"+prof+"/route/v1/driving/"+coords+"?overview=full&geometries=geojson";
+ function get(n){return fetch(url).then(function(r){if(!r.ok)throw 0;return r.json()}).catch(function(e){if(n>0)return new Promise(function(ok){setTimeout(ok,700)}).then(function(){return get(n-1)});throw e})}
+ if(window.fetch&&pts.length>1)get(3)
   .then(function(d){
    if(myMap!==map||!d.routes||!d.routes[0])return;
    var g=d.routes[0].geometry.coordinates.map(function(c){return [c[1],c[0]]});
