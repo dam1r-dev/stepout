@@ -140,6 +140,15 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 .scroll-hint:after{content:"";position:absolute;left:50%;top:8px;width:4px;height:8px;margin-left:-2px;border-radius:2px;background:var(--acc);animation:wheel 1.6s ease-in-out infinite}
 @keyframes wheel{0%{opacity:0;transform:translateY(0)}30%{opacity:1}100%{opacity:0;transform:translateY(14px)}}
 @media(max-width:560px){.scroll-hint{display:none}}
+.grp .who{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.grp .badge{font-size:11px;border-radius:99px;padding:3px 9px;background:rgba(95,211,154,.12);color:var(--acc);border:1px solid rgba(95,211,154,.35);white-space:nowrap}
+.grp .next{font-size:13px;color:#cfcfcf;margin:10px 0 4px}
+.grp .seats{height:6px;border-radius:99px;background:#222;overflow:hidden;margin:10px 0 6px}
+.grp .seats span{display:block;height:100%;background:var(--acc);transition:width .4s}
+.grp small{color:var(--mut)}
+.grp .btn{width:100%;margin-top:12px}
+.grp.joined{border-color:var(--acc)}
+.grp.hide{display:none}
 /* ===== animations ===== */
 .js .reveal{opacity:0;transform:translateY(28px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
 .js .reveal.in{opacity:1;transform:none}
@@ -201,7 +210,7 @@ document.addEventListener("DOMContentLoaded",function(){
 <nav><div class="wrap">
  <a href="#top" class="logo">Step<span>Out</span></a>
  <div class="links">
-  <a href="#problem">Проблема</a><a href="#solution">Решение</a><a href="#demo">Демо</a><a href="#eco">Эко</a><a href="#partners">Партнёрам</a><a href="#qr">QR</a>
+  <a href="#problem">Проблема</a><a href="#solution">Решение</a><a href="#demo">Демо</a><a href="#eco">Эко</a><a href="#company-find">Компания</a><a href="#partners">Партнёрам</a><a href="#qr">QR</a>
  </div>
  <a href="#demo" class="btn sm">Попробовать демо</a>
 </div></nav>
@@ -265,7 +274,7 @@ document.addEventListener("DOMContentLoaded",function(){
   <div class="panel">
    <label>Сколько у вас времени</label>
    <div class="rangeval"><span id="hVal">4</span> ч</div>
-   <input type="range" id="hours" min="2" max="8" step="1" value="4">
+   <input type="range" id="hours" min="2" max="10" step="1" value="4">
    <label>Интересы</label>
    <div class="chips" id="interests">
     <button class="chip on" data-v="culture">🏛 Культура</button>
@@ -290,6 +299,32 @@ document.addEventListener("DOMContentLoaded",function(){
     <button class="chip on" data-v="walk">🚶 Пешком</button>
     <button class="chip" data-v="bike">🚲 Вело</button>
     <button class="chip" data-v="car">🚗 Авто</button>
+   </div>
+   <label>Начало прогулки</label>
+   <div class="chips" data-single id="start">
+    <button class="chip" data-v="540">09:00</button>
+    <button class="chip on" data-v="600">10:00</button>
+    <button class="chip" data-v="780">13:00</button>
+    <button class="chip" data-v="960">16:00</button>
+    <button class="chip" data-v="1080">18:00</button>
+   </div>
+   <label>Темп</label>
+   <div class="chips" data-single id="pace">
+    <button class="chip" data-v="calm">🐢 Спокойный</button>
+    <button class="chip on" data-v="normal">🚶 Обычный</button>
+    <button class="chip" data-v="active">⚡ Активный</button>
+   </div>
+   <label>Компания</label>
+   <div class="chips" data-single id="company">
+    <button class="chip on" data-v="adults">🧑 Взрослые</button>
+    <button class="chip" data-v="kids">👨‍👩‍👧 С детьми</button>
+   </div>
+   <label>Приоритеты</label>
+   <div class="chips" id="prio" data-allow-empty>
+    <button class="chip on" data-v="top">🔥 Топ-места</button>
+    <button class="chip" data-v="quiet">🤫 Без толп</button>
+    <button class="chip" data-v="hidden">💎 Скрытые места</button>
+    <button class="chip" data-v="eco">🌱 Эко</button>
    </div>
    <label>Льготы</label>
    <div class="chips" data-single id="who">
@@ -352,6 +387,19 @@ document.addEventListener("DOMContentLoaded",function(){
   <div class="card"><span class="num">Q4</span><h3>Скрытые точки</h3><p>Локальные места, квесты, эко-перки.</p></div>
   <div class="card"><span class="num">Q5</span><h3>Эко-маршруты</h3><p>Бонусы за чек-ины, тропы, вода, санузлы.</p></div>
  </div>
+</div></section>
+
+<section id="company-find"><div class="wrap">
+ <div class="eyebrow">Найти компанию</div>
+ <h2>Гуляйте не в одиночку</h2>
+ <p class="lead">Присоединяйтесь к группе по возрасту и интересам — StepOut соберёт общий маршрут, а гид или организатор встретит в точке старта.</p>
+ <div class="chips" id="grpFilter" data-single style="margin-top:28px">
+  <button class="chip on" data-v="all">Все</button>
+  <button class="chip" data-v="age">По возрасту</button>
+  <button class="chip" data-v="int">По интересам</button>
+ </div>
+ <div class="grid g4" id="groups"></div>
+ <p style="color:var(--mut);font-size:13px;margin-top:16px">Демо: группы и расписание условные. Подростковые прогулки — только с сопровождающим гидом и согласия родителей.</p>
 </div></section>
 
 <section id="partners"><div class="wrap">
@@ -446,11 +494,31 @@ $$(".chips").forEach(function(g){
   if(single){$$(".chip",g).forEach(function(c){c.classList.remove("on")});b.classList.add("on")}
   else{
    b.classList.toggle("on");
-   if(!$$(".chip.on",g).length)b.classList.add("on");
+   if(!$$(".chip.on",g).length&&!g.hasAttribute("data-allow-empty"))b.classList.add("on");
   }
  });
 });
 $("#hours").addEventListener("input",function(){$("#hVal").textContent=this.value});
+
+// ===== дополнительные места Алматы (координаты и часы — примерные) =====
+PLACES.push(
+ {id:23,n:"Старая площадь (Астана алаңы)",t:"culture",in:false,d:25,p:1,q:0,tk:0,lat:43.2577,lng:76.9446,st:"Бывшая главная площадь города: здание бывшего Дома правительства — пример сталинского ампира в Алматы."},
+ {id:24,n:"Esentai Mall и арт-зона",t:"local",in:true,d:50,p:3,q:0,tk:0,lat:43.2185,lng:76.9280,st:"Современный Алматы: дизайн, галереи и кафе у реки Есентай."},
+ {id:25,n:"Цирк Алматы",t:"culture",in:true,d:90,p:2,q:20,tk:4000,lat:43.2402,lng:76.9157,kid:1,st:"Здание цирка с куполом-«юртой» — один из самых узнаваемых силуэтов города."},
+ {id:26,n:"Алматинский зоопарк",t:"nature",in:false,d:80,p:1,q:15,tk:1500,lat:43.2545,lng:76.9720,kid:1,st:"Один из старейших зоопарков Центральной Азии — открыт в 1937 году."},
+ {id:27,n:"Тропа Горельник (от Медеу)",t:"eco",in:false,d:120,p:1,q:0,tk:0,lat:43.1420,lng:77.0690,hid:1,eco:"Не сходите с тропы · заберите мусор с собой",st:"Тропа ведёт через еловый лес к старой метеостанции и горным ручьям."},
+ {id:28,n:"Бутаковский водопад",t:"eco",in:false,d:120,p:1,q:0,tk:0,lat:43.1690,lng:77.0590,hid:1,eco:"Лимит потока в выходные · бережём ущелье",st:"Небольшой водопад в ущелье Бутаковка — любимое место местных для коротких походов."},
+ {id:29,n:"Терренкур Весновка",t:"eco",in:false,d:40,p:1,q:0,tk:0,lat:43.2230,lng:76.9050,hid:1,eco:"Пешая тропа вдоль реки · питьевые фонтанчики",st:"Река Весновка течёт с гор через весь город — вдоль неё проложена прогулочная тропа."},
+ {id:30,n:"Кофейня с видом на горы (партнёр)",t:"food",in:true,d:30,p:1,q:5,tk:0,lat:43.2290,lng:76.9480,hid:1,bn:"Десерт в подарок к кофе",st:"Из окон видно пик Комсомола и Заилийский Алатау — в ясный день горы как на ладони."},
+ {id:31,n:"Ресторан казахской кухни (партнёр)",t:"food",in:true,d:60,p:2,q:10,tk:0,lat:43.2470,lng:76.9500,bn:"Баурсаки к чаю бесплатно",st:"Попробуйте бешбармак и баурсаки — главные блюда казахского дастархана."},
+ {id:32,n:"Баня «Арасан»",t:"local",in:true,d:90,p:2,q:10,tk:5000,lat:43.2593,lng:76.9565,st:"Арасан — легендарная баня 1980-х с турецким, финским и русским залами."},
+ {id:33,n:"Дворец Республики и памятник Абаю",t:"culture",in:false,d:20,p:1,q:0,tk:0,lat:43.2408,lng:76.9545,st:"Памятник Абаю Кунанбаеву — поэту и философу, чьё имя носит главный проспект."},
+ {id:34,n:"Ночной Арбат: уличные музыканты",t:"local",in:false,d:40,p:1,q:0,tk:0,lat:43.2590,lng:76.9425,bn:"Чек-ин = бейдж «Ночной Алматы»",st:"Вечером Жибек Жолы превращается в сцену: музыканты, художники, танцоры."}
+);
+// часы работы (минуты от 00:00), дети, скрытые места, закат
+var HRS={1:[600,1080],2:[600,1080],3:[660,1020],4:[480,1320],5:[480,1080],6:[600,1380],7:[540,1200],8:[600,1440],9:[660,1200],10:[0,1440],11:[0,1440],12:[540,1380],13:[0,1440],14:[540,1260],15:[0,1440],16:[540,1140],17:[600,1320],18:[540,1020],19:[420,1140],20:[0,1440],21:[600,1080],22:[0,1440],23:[0,1440],24:[600,1320],25:[660,1200],26:[540,1140],27:[480,1080],28:[480,1080],29:[0,1440],30:[480,1320],31:[660,1410],32:[600,1320],33:[0,1440],34:[1080,1440]};
+var FLAG={8:{sun:1,kid:1},20:{sun:1,kid:1},17:{sun:1},15:{sun:1},12:{kid:1},7:{kid:1},6:{hid:1},9:{hid:1,kid:1},11:{hid:1},14:{hid:1},13:{hid:1},21:{kid:1},10:{kid:1}};
+PLACES.forEach(function(p){var h=HRS[p.id]||[0,1440];p.o=h[0];p.c=h[1];var f=FLAG[p.id];if(f)for(var k in f)p[k]=f[k]});
 
 function readOpts(){
  return{
@@ -459,40 +527,80 @@ function readOpts(){
   budget:+$("#budget .chip.on").dataset.v,
   rain:$("#weather .chip.on").dataset.v==="rain",
   mode:$("#mode .chip.on").dataset.v,
-  who:$("#who .chip.on").dataset.v
+  who:$("#who .chip.on").dataset.v,
+  start:+$("#start .chip.on").dataset.v,
+  pace:$("#pace .chip.on").dataset.v,
+  kids:$("#company .chip.on").dataset.v==="kids",
+  prio:$$("#prio .chip.on").map(function(c){return c.dataset.v})
  }
 }
 function dist(a,b){var R=6371,r=Math.PI/180,dl=(b.lat-a.lat)*r,dg=(b.lng-a.lng)*r;var h=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dg/2)*Math.sin(dg/2);return 2*R*Math.asin(Math.sqrt(h))*1.3}
-function travel(a,b,mode){var base=dist(a,b)*12;var m=Math.max(5,Math.round(base*MOVE[mode].k));if(mode==="car")m+=8;return m}
+var SPEED={walk:4.5,bike:13,car:22};
+function travel(a,b,mode){var km=dist(a,b);var m=Math.round(km/SPEED[mode]*60);if(mode==="car")m+=8;if(mode==="walk"&&km>4)m=Math.round(km/SPEED.car*60)+10;return Math.max(5,m)}
+function walkMode(a,b,mode){return mode==="walk"&&dist(a,b)>4?"на такси/автобусе (далеко)":MOVE[mode].name}
+var PACE={calm:1.2,normal:1,active:.85};
+var BUDGET={1:3000,2:12000,3:1e9};
+function has(a,v){return a.indexOf(v)>=0}
+// загруженность по времени суток: пики 12–15 и 17–19
+function crowd(t){var h=t/60;if(h>=12&&h<15)return 1;if(h>=17&&h<19)return .75;if(h>=10&&h<12)return .5;return .3}
+function dur(p,o){return Math.round(p.d*PACE[o.pace])}
 
-function score(p,o){
- var s=0;
- if(o.ints.indexOf(p.t)>=0)s+=10;
- if(p.p>o.budget)s-=20;
- if(o.rain&&!p.in)s-=(p.t==="nature"||p.t==="eco")?12:6;
- if(o.rain&&p.in)s+=3;
- if(p.bn)s+=1;
- if(p.pop)s+=3;
- return s;
+// оценка места в контексте: где мы, сколько времени, что уже было в маршруте
+function evalPlace(p,o,cur,t,route,spent){
+ var why=[],s=0,tr=travel(cur,p,o.mode),arr=t+tr,d=dur(p,o);
+ if(arr<p.o||arr+d>p.c)return null;                       // закрыто
+ if(p.p>o.budget)return null;                              // дороже бюджета
+ if(spent+price(p)>BUDGET[o.budget])return null;           // общий лимит на билеты
+ if(o.kids&&!p.kid&&(p.t==="eco"&&p.d>=90))return null;    // длинные походы с детьми — нет
+ if(has(o.ints,p.t)){s+=12;why.push("ваш интерес")}else s-=4;
+ if(o.rain){if(p.in){s+=5;why.push("под крышей")}else s-=(p.t==="nature"||p.t==="eco")?14:7}
+ var q=p.q*crowd(arr);
+ if(has(o.prio,"quiet")){s-=q*.35;if(p.q===0||crowd(arr)<.5){s+=3;why.push("мало людей сейчас")}}else s-=q*.1;
+ if(p.pop){s+=has(o.prio,"top")?7:2;if(has(o.prio,"top"))why.push("топ-место")}
+ if(p.hid&&has(o.prio,"hidden")){s+=8;why.push("скрытое место")}
+ if(p.eco&&has(o.prio,"eco")){s+=6;why.push("эко-формат")}
+ if(o.kids){if(p.kid){s+=6;why.push("подходит детям")}else s-=5}
+ if(p.bn){s+=1}
+ var last=route.length?route[route.length-1].p:null;
+ var foodCnt=route.filter(function(r){return r.p.t==="food"}).length;
+ if(p.t==="food"){
+  var h=arr/60;
+  if((h>=12.5&&h<14.5)||(h>=18.5&&h<20.5)){s+=14;why.push(h<15?"время обеда":"время ужина")}
+  else if(h<11)s-=4;
+  if(last&&last.t==="food")s-=25;
+  if(route.length>1&&route[route.length-2].p.t==="food")s-=12;
+  if(foodCnt>=2)s-=20;
+ } else if(route.length>=3&&foodCnt===0&&arr/60>=13)s-=3; // пора бы поесть
+ if(p.sun){var hh=arr/60;if(hh>=17.5&&hh<20.5){s+=24;why.push("закат")}}
+ if(p.c-p.o<1440&&p.c-(arr+d)<30){s+=2;why.push("успеваем до закрытия")}
+ if(last&&last.t===p.t&&p.t!=="food")s-=6;
+ var same=route.filter(function(r){return r.p.t===p.t}).length;if(same>=2)s-=8*(same-1);
+ var km=dist(cur,p);s-=km*({walk:6,bike:2.5,car:.9}[o.mode]);
+ if(km<1.2&&route.length){why.push("рядом с предыдущей точкой")}
+ return{s:s,why:why,tr:tr,d:d};
 }
 
-function build(o,exclude){
- exclude=exclude||[];
- var total=o.hours*60,start=10*60;
- var pool=PLACES.filter(function(p){return exclude.indexOf(p.id)<0&&score(p,o)>-5}).sort(function(a,b){return score(b,o)-score(a,o)});
- var route=[],used=0,cur=START;
- // жадный выбор: лучший по скору с учётом близости
- while(pool.length){
-  var best=null,bv=-1e9;
-  pool.forEach(function(p){var v=score(p,o)*10-dist(cur,p)*(o.mode==="car"?3:8);if(v>bv){bv=v;best=p}});
-  var tr=travel(cur,best,o.mode);
-  if(used+tr+best.d>total){pool.splice(pool.indexOf(best),1);continue}
-  route.push({p:best,tr:tr});used+=tr+best.d;cur=best;
-  pool.splice(pool.indexOf(best),1);
-  // не больше двух мест одного типа подряд
+function build(o,exclude,prefix){
+ exclude=exclude||[];prefix=prefix||[];
+ var end=o.start+o.hours*60,route=[],cur=START,t=o.start,spent=0;
+ prefix.forEach(function(p){var tr=travel(cur,p,o.mode);route.push({p:p,tr:tr,why:["оставили в плане"]});t+=tr+dur(p,o)+Math.round(p.q*crowd(t+tr)*.15);spent+=price(p);cur=p});
+ var used=route.map(function(r){return r.p.id}).concat(exclude);
+ var maxStops=o.pace==="calm"?5:o.pace==="active"?9:7;
+ while(route.length<maxStops){
+  var best=null;
+  PLACES.forEach(function(p){
+   if(used.indexOf(p.id)>=0)return;
+   var e=evalPlace(p,o,cur,t,route,spent);if(!e)return;
+   if(t+e.tr+e.d>end)return;
+   if(!best||e.s>best.e.s)best={p:p,e:e};
+  });
+  if(!best||best.e.s<-12)break;
+  route.push({p:best.p,tr:best.e.tr,why:best.e.why});
+  used.push(best.p.id);
+  t+=best.e.tr+best.e.d+Math.round(best.p.q*crowd(t+best.e.tr)*.15);
+  spent+=price(best.p);cur=best.p;
  }
- // гарантируем кофейню/еду для длинных прогулок
- return computeTimes(route,o,start);
+ return computeTimes(route,o,o.start);
 }
 
 function computeTimes(route,o,start){
@@ -500,15 +608,13 @@ function computeTimes(route,o,start){
  route.forEach(function(r,i){
   t+=r.tr;
   r.arrive=t;
-  // прогноз очереди: пик 11:00–14:00
-  var peak=(t>=11*60&&t<=14*60);
-  r.qNow=r.p.q?(peak?r.p.q:Math.round(r.p.q*.35)):0;
-  r.qBest=r.p.q?Math.max(3,Math.round(r.p.q*.15)):0;
+  r.qNow=r.p.q?Math.round(r.p.q*crowd(t)):0;
+  r.qBest=r.p.q?Math.max(2,Math.round(r.p.q*.15)):0;
   r.saved=r.p.tk?r.qNow:Math.max(0,r.qNow-r.qBest);
   r.wait=r.p.tk?0:r.qBest; // с QR-билетом очередь в кассу не нужна
-  t+=r.wait+r.p.d;
+  t+=r.wait+dur(r.p,o);
   r.leave=t;
-  r.traffic=(o.mode==="car"&&i%2===0);
+  r.traffic=(o.mode==="car"&&crowd(r.arrive)>=.75);
  });
  return route;
 }
@@ -581,16 +687,20 @@ function render(changedId,msg){
  html+='<div class="tl">';
  route.forEach(function(r,i){
   var p=r.p;
-  html+='<div class="walk">'+(o.mode==="walk"?"🚶":o.mode==="bike"?"🚲":"🚗")+' '+r.tr+' мин '+MOVE[o.mode].name+(r.traffic?' · <span style="color:var(--warn)">пробка учтена, объезд +3 мин</span>':'')+'</div>';
+  var prevP=i?route[i-1].p:START;
+  html+='<div class="walk">'+(o.mode==="walk"&&dist(prevP,p)<=4?"🚶":o.mode==="bike"?"🚲":"🚗")+' '+r.tr+' мин '+walkMode(prevP,p,o.mode)+(r.traffic?' · <span style="color:var(--warn)">пробка учтена, объезд +3 мин</span>':'')+'</div>';
   html+='<div class="stop'+(p.id===changedId?" changed":"")+'" data-n="'+(i+1)+'" style="animation-delay:'+(i*.06)+'s">'+
    '<div class="top"><h4>'+esc(p.n)+'</h4><span class="time">'+fmt(r.arrive)+' – '+fmt(r.leave)+'</span></div>'+
-   '<div class="meta">'+p.d+' мин · '+(p.in?"в помещении":"на улице")+(p.tk?" · билет "+(o.who!=="adult"?'<s>'+money(p.tk)+'</s> ':'')+money(price(p)):" · вход свободный")+'</div>'+
+   '<div class="meta">'+dur(p,o)+' мин · '+(p.c-p.o<1440?'открыто '+fmt(p.o)+'–'+fmt(p.c%1440)+' · ':'')+(p.in?"в помещении":"на улице")+(p.tk?" · билет "+(o.who!=="adult"?'<s>'+money(p.tk)+'</s> ':'')+money(price(p)):" · вход свободный")+'</div>'+
    '<div class="pills">';
   if(p.q){
    if(p.tk)html+='<span class="pill ok">Очередь в кассу '+r.qNow+' мин → 0 с QR</span>';
    else html+='<span class="pill warn">Очередь сейчас ~'+r.qNow+' мин</span><span class="pill ok">Лучшее окно: '+r.qBest+' мин</span>';
   } else html+='<span class="pill ok">Без очереди</span>';
+  if(r.why&&r.why.length)html+='<span class="pill" style="border-color:rgba(95,211,154,.5)">✨ Почему: '+esc(r.why.slice(0,3).join(", "))+'</span>';
   if(p.pop)html+='<span class="pill">🔥 Топ Алматы</span>';
+  if(p.hid)html+='<span class="pill">💎 Скрытое место</span>';
+  if(p.kid&&o.kids)html+='<span class="pill ok">👶 Для детей</span>';
   if(p.bn)html+='<span class="pill">🎁 '+esc(p.bn)+'</span>';
   if(p.eco)html+='<span class="pill eco">🌱 '+esc(p.eco)+'</span>';
   if(o.rain&&!p.in)html+='<span class="pill warn">☔ возьмите зонт</span>';
@@ -610,7 +720,7 @@ function render(changedId,msg){
 }
 
 function doBuild(){
- state.opts=readOpts();state.rerouted=0;
+ state.opts=readOpts();state.rerouted=0;state.excl=[];
  state.route=build(state.opts);
  render(null,null);
 }
@@ -619,19 +729,14 @@ function replaceStop(id,reason){
  var o=state.opts,idx=-1;
  state.route.forEach(function(r,i){if(r.p.id===id)idx=i});
  if(idx<0)return;
- var usedIds=state.route.map(function(r){return r.p.id});
  var old=state.route[idx].p;
- var cand=PLACES.filter(function(p){return usedIds.indexOf(p.id)<0&&(!o.rain||p.in)&&p.p<=o.budget})
-  .sort(function(a,b){return (score(b,o)-dist(old,b)*1.5)-(score(a,o)-dist(old,a)*1.5)});
- if(!cand.length){render(null,"Подходящей замены рядом нет — оставили маршрут как есть.");return}
- var nw=cand[0];
- var prev=idx?state.route[idx-1].p:START;
- state.route[idx]={p:nw,tr:travel(prev,nw,o.mode)};
- if(state.route[idx+1])state.route[idx+1].tr=travel(nw,state.route[idx+1].p,o.mode);
- // если вылезли за лимит — убираем хвост
- computeTimes(state.route,o,600);
- while(state.route.length>1&&state.route[state.route.length-1].leave>600+o.hours*60){state.route.pop()}
- render(nw.id,reason+" «"+old.n+"» → «"+nw.n+"». Время пересчитано.");
+ var prefix=state.route.slice(0,idx).map(function(r){return r.p});
+ state.excl=(state.excl||[]).concat([old.id]);
+ var nr=build(o,state.excl,prefix);
+ if(!nr.length){render(null,"Подходящей замены нет — оставили маршрут как есть.");return}
+ state.route=nr;
+ var nw=nr[idx]?nr[idx].p:null;
+ render(nw?nw.id:null,reason+" «"+old.n+"»"+(nw?" → «"+nw.n+"»":" убрали")+". Остаток маршрута пересчитан с учётом времени, часов работы и очередей.");
 }
 
 $("#build").addEventListener("click",function(){doBuild();var r=$("#result");if(window.innerWidth<900)r.scrollIntoView({behavior:"smooth"})});
@@ -657,21 +762,55 @@ $("#result").addEventListener("click",function(e){
  else if(act==="rain"){
   state.opts.rain=true;
   $$("#weather .chip").forEach(function(c){c.classList.toggle("on",c.dataset.v==="rain")});
-  var outs=state.route.filter(function(r){return !r.p.in});
-  if(!outs.length){render(null,"Дождь не страшен — весь маршрут уже под крышей ☂️");return}
-  var usedIds=state.route.map(function(r){return r.p.id}),changed=[];
-  outs.forEach(function(r){
-   var cand=PLACES.filter(function(p){return p.in&&usedIds.indexOf(p.id)<0&&p.p<=state.opts.budget}).sort(function(a,b){return dist(r.p,a)-dist(r.p,b)});
-   if(cand.length){changed.push(r.p.n);usedIds.push(cand[0].id);r.p=cand[0]}
-  });
-  var prev=START;state.route.forEach(function(r){r.tr=travel(prev,r.p,state.opts.mode);prev=r.p});
-  computeTimes(state.route,state.opts,600);
-  while(state.route.length>1&&state.route[state.route.length-1].leave>600+state.opts.hours*60)state.route.pop();
-  render(null,"Пошёл дождь: уличные точки ("+changed.length+") заменили на места под крышей.");
+  var outs=state.route.slice(1).filter(function(r){return !r.p.in}).length;
+  if(!outs){render(null,"Дождь не страшен — дальше маршрут под крышей ☂️");return}
+  state.route=build(state.opts,state.excl,[state.route[0].p]);
+  render(null,"Пошёл дождь: уличные точки ("+outs+") заменили, маршрут после первой точки пересобран под крышей.");
  }
 });
 $("#mClose").addEventListener("click",function(){$("#modal").classList.remove("show")});
 $("#modal").addEventListener("click",function(e){if(e.target===this)this.classList.remove("show")});
+})();
+</script>
+<script>
+(function(){
+ var G=[
+  {id:"teen",k:"age",ic:"🧑‍🎤",n:"Подростковая компания",a:"14–17 лет",d:"Квест-рулетка по центру, стрит-арт и Арбат. С сопровождающим гидом.",w:"Сб 12:00 · Арбат",m:12,j:8},
+  {id:"stud",k:"age",ic:"🎓",n:"Студенты",a:"18–24 года",d:"Бюджетные маршруты, кофейни и вечерний Кок-Тобе. Скидка −30%.",w:"Пт 18:00 · Абая / Достык",m:15,j:11},
+  {id:"girls",k:"int",ic:"💃",n:"Girls",a:"только девушки",d:"Фото-локации, кофейни, мастер-классы по керамике и шопинг.",w:"Вс 13:00 · Esentai Mall",m:10,j:7},
+  {id:"mid",k:"age",ic:"🧑‍💼",n:"Средний возраст",a:"30–45 лет",d:"Музеи, гастро-прогулки, казахская кухня и неспешный темп.",w:"Сб 11:00 · Центральный музей",m:12,j:5},
+  {id:"senior",k:"age",ic:"👴",n:"Активные 55+",a:"от 55 лет",d:"Парки, ботсад, театр и спокойные маршруты. Скидка −50%.",w:"Чт 10:00 · Ботанический сад",m:15,j:9},
+  {id:"family",k:"int",ic:"👨‍👩‍👧",n:"Семьи с детьми",a:"всей семьёй",d:"Зоопарк, цирк, парк Горького и интерактивные музеи.",w:"Вс 10:00 · Парк Горького",m:8,j:6},
+  {id:"eco",k:"int",ic:"🌱",n:"Эко-походы",a:"любой возраст",d:"Бутаковка, Горельник и уборка троп. Экобус вместо такси.",w:"Сб 08:00 · Медеу",m:20,j:14},
+  {id:"photo",k:"int",ic:"📸",n:"Фото-прогулки",a:"любой возраст",d:"Закат на Кок-Тобе, ночной Арбат и лучшие ракурсы города.",w:"Пт 18:30 · Кок-Тобе",m:10,j:4}
+ ];
+ var KEY="stepout_groups",joined={};
+ try{joined=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){joined={}}
+ var box=document.getElementById("groups");if(!box)return;
+ function card(g){
+  var on=!!joined[g.id],cnt=g.j+(on?1:0),full=cnt>=g.m&&!on;
+  return '<div class="card grp'+(on?" joined":"")+'" data-k="'+g.k+'">'+
+   '<div class="who"><span class="ic" style="margin:0">'+g.ic+'</span><span class="badge">'+g.a+'</span></div>'+
+   '<h3>'+g.n+'</h3><p>'+g.d+'</p>'+
+   '<div class="next">📅 '+g.w+'</div>'+
+   '<div class="seats"><span style="width:'+Math.min(100,cnt/g.m*100)+'%"></span></div>'+
+   '<small>'+cnt+' из '+g.m+' мест занято</small>'+
+   '<button class="btn sm'+(on?" ghost":"")+'" data-g="'+g.id+'"'+(full?" disabled":"")+'>'+(on?"✓ Вы в группе — выйти":full?"Мест нет":"Присоединиться")+'</button>'+
+  '</div>';
+ }
+ function draw(){
+  var f=document.querySelector("#grpFilter .chip.on").dataset.v;
+  box.innerHTML=G.map(card).join("");
+  Array.prototype.forEach.call(box.children,function(c){if(f!=="all"&&c.dataset.k!==f)c.classList.add("hide")});
+ }
+ box.addEventListener("click",function(e){
+  var b=e.target.closest("[data-g]");if(!b||b.disabled)return;
+  var id=b.dataset.g;if(joined[id])delete joined[id];else joined[id]=1;
+  try{localStorage.setItem(KEY,JSON.stringify(joined))}catch(err){}
+  draw();
+ });
+ document.getElementById("grpFilter").addEventListener("click",function(e){if(e.target.closest(".chip"))setTimeout(draw,0)});
+ draw();
 })();
 </script>
 </body>
