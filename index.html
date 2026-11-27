@@ -280,6 +280,12 @@ document.addEventListener("DOMContentLoaded",function(){
     <button class="chip" data-v="bike">🚲 Вело</button>
     <button class="chip" data-v="car">🚗 Авто</button>
    </div>
+   <label>Льготы</label>
+   <div class="chips" data-single id="who">
+    <button class="chip on" data-v="adult">Взрослый</button>
+    <button class="chip" data-v="student">🎓 Студент −30%</button>
+    <button class="chip" data-v="senior">👴 Пенсионер −50%</button>
+   </div>
    <button class="btn" id="build">Построить маршрут</button>
   </div>
   <div class="result" id="result">
@@ -302,6 +308,11 @@ document.addEventListener("DOMContentLoaded",function(){
    <p>Кофейни и мастерские — горячий целевой трафик. Нацпарки и эко-точки — управление нагрузкой и сборы. Гиды и пространства — продвижение событий.</p>
    <div style="margin-top:12px"><span class="tag">Поток по слотам</span><span class="tag">Реальные визиты</span><span class="tag">Аналитика</span></div>
   </div>
+ </div>
+ <div class="card" style="margin-top:16px;display:flex;gap:18px;align-items:center;flex-wrap:wrap;border-color:rgba(95,211,154,.45);background:linear-gradient(90deg,rgba(95,211,154,.12),transparent),var(--card)">
+  <span style="font-size:40px">🎓👴</span>
+  <div style="flex:1;min-width:220px"><h3 style="font-size:20px">Скидки студентам и пенсионерам</h3><p>Студентам — <b style="color:var(--acc)">−30%</b>, пенсионерам — <b style="color:var(--acc)">−50%</b> на билеты, экскурсии и мастер-классы внутри маршрута.</p></div>
+  <a href="#demo" class="btn sm">Посчитать в демо</a>
  </div>
  <h3 class="disp" style="margin-top:50px;font-size:20px">Креативные форматы</h3>
  <div class="grid g4">
@@ -422,6 +433,8 @@ function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAl
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 function fmt(m){var h=Math.floor(m/60)%24,mm=m%60;return (h<10?"0":"")+h+":"+(mm<10?"0":"")+mm}
 function money(v){return v.toLocaleString("ru-RU")+" ₸"}
+var DISC={adult:0,student:.3,senior:.5},WHO={adult:"1 взрослый",student:"1 студент (−30%)",senior:"1 пенсионер (−50%)"};
+function price(p){var o=state.opts||{who:"adult"};return Math.round(p.tk*(1-DISC[o.who])/10)*10}
 
 // чипы
 $$(".chips").forEach(function(g){
@@ -443,7 +456,8 @@ function readOpts(){
   ints:$$("#interests .chip.on").map(function(c){return c.dataset.v}),
   budget:+$("#budget .chip.on").dataset.v,
   rain:$("#weather .chip.on").dataset.v==="rain",
-  mode:$("#mode .chip.on").dataset.v
+  mode:$("#mode .chip.on").dataset.v,
+  who:$("#who .chip.on").dataset.v
  }
 }
 function dist(a,b){var R=6371,r=Math.PI/180,dl=(b.lat-a.lat)*r,dg=(b.lng-a.lng)*r;var h=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dg/2)*Math.sin(dg/2);return 2*R*Math.asin(Math.sqrt(h))*1.3}
@@ -499,7 +513,7 @@ function computeTimes(route,o,start){
 
 function stats(route,o){
  var saved=0,cost=0,km=0,co2=0;
- route.forEach(function(r,i){saved+=r.saved;cost+=r.p.tk;var k=r.tr*(o.mode==="walk"?.08:o.mode==="bike"?.25:.4);km+=k;});
+ route.forEach(function(r,i){saved+=r.saved;cost+=price(r.p);var k=r.tr*(o.mode==="walk"?.08:o.mode==="bike"?.25:.4);km+=k;});
  if(o.mode==="car")co2=km*.17;
  var savedCo2=o.mode==="car"?0:km*.17;
  return{saved:saved+15,cost:cost,km:km,savedCo2:savedCo2};
@@ -528,7 +542,19 @@ function drawMap(route){
   L.circleMarker([p.lat,p.lng],{radius:5,color:"#555",fillColor:"#777",fillOpacity:.8,weight:1}).addTo(map).bindTooltip(p.n);
  });
  var pts=[[START.lat,START.lng]].concat(route.map(function(r){return [r.p.lat,r.p.lng]}));
- L.polyline(pts,{color:"#5fd39a",weight:4,dashArray:"8 8"}).addTo(map);
+ var line=L.polyline(pts,{color:"#5fd39a",weight:4,dashArray:"8 8",opacity:.5}).addTo(map);
+ // путь по реальным улицам (OSM-роутер); если недоступен — остаётся прямой пунктир
+ var prof={walk:"routed-foot",bike:"routed-bike",car:"routed-car"}[state.opts.mode];
+ var coords=pts.map(function(p){return p[1]+","+p[0]}).join(";");
+ var myMap=map;
+ if(window.fetch&&pts.length>1)fetch("https://routing.openstreetmap.de/"+prof+"/route/v1/driving/"+coords+"?overview=full&geometries=geojson")
+  .then(function(r){return r.json()})
+  .then(function(d){
+   if(myMap!==map||!d.routes||!d.routes[0])return;
+   var g=d.routes[0].geometry.coordinates.map(function(c){return [c[1],c[0]]});
+   myMap.removeLayer(line);
+   L.polyline(g,{color:"#0b110e",weight:8,opacity:.6}).addTo(myMap);
+   L.polyline(g,{color:"#5fd39a",weight:4,dashArray:"2 10",lineCap:"round"}).addTo(myMap);  }).catch(function(){});
  L.circleMarker([START.lat,START.lng],{radius:8,color:"#fff",fillColor:"#fff",fillOpacity:1}).addTo(map).bindTooltip(START.n);
  route.forEach(function(r,i){
   var ic=L.divIcon({className:"",html:'<div class="mk">'+(i+1)+'</div>',iconSize:[26,26],iconAnchor:[13,13]});
@@ -555,7 +581,7 @@ function render(changedId,msg){
   html+='<div class="walk">'+(o.mode==="walk"?"🚶":o.mode==="bike"?"🚲":"🚗")+' '+r.tr+' мин '+MOVE[o.mode].name+(r.traffic?' · <span style="color:var(--warn)">пробка учтена, объезд +3 мин</span>':'')+'</div>';
   html+='<div class="stop'+(p.id===changedId?" changed":"")+'" data-n="'+(i+1)+'" style="animation-delay:'+(i*.06)+'s">'+
    '<div class="top"><h4>'+esc(p.n)+'</h4><span class="time">'+fmt(r.arrive)+' – '+fmt(r.leave)+'</span></div>'+
-   '<div class="meta">'+p.d+' мин · '+(p.in?"в помещении":"на улице")+(p.tk?" · билет "+money(p.tk):" · вход свободный")+'</div>'+
+   '<div class="meta">'+p.d+' мин · '+(p.in?"в помещении":"на улице")+(p.tk?" · билет "+(o.who!=="adult"?'<s>'+money(p.tk)+'</s> ':'')+money(price(p)):" · вход свободный")+'</div>'+
    '<div class="pills">';
   if(p.q){
    if(p.tk)html+='<span class="pill ok">Очередь в кассу '+r.qNow+' мин → 0 с QR</span>';
@@ -567,7 +593,7 @@ function render(changedId,msg){
   if(o.rain&&!p.in)html+='<span class="pill warn">☔ возьмите зонт</span>';
   html+='</div><div class="story" id="st'+p.id+'">🎧 <b>История за 90 сек:</b> '+esc(p.st)+'</div>'+
    '<div class="acts">'+
-   (p.tk?'<button class="btn sm" data-act="ticket" data-id="'+p.id+'">QR-билет · '+money(p.tk)+'</button>':'')+
+   (p.tk?'<button class="btn sm" data-act="ticket" data-id="'+p.id+'">QR-билет · '+money(price(p))+'</button>':'')+
    '<button class="btn sm ghost" data-act="story" data-id="'+p.id+'">▶ Аудиоистория</button>'+
    '<button class="btn sm ghost" data-act="skip" data-id="'+p.id+'">Заменить</button>'+
    '</div></div>';
@@ -616,7 +642,7 @@ $("#result").addEventListener("click",function(e){
   var r=state.route.filter(function(x){return x.p.id===id})[0];
   $("#mTitle").textContent=p.n;
   $("#mQr").innerHTML=qrSVG(id*7+3);
-  $("#mInfo").textContent="Слот "+fmt(r.arrive)+" · 1 взрослый · "+money(p.tk);
+  $("#mInfo").textContent="Слот "+fmt(r.arrive)+" · "+WHO[state.opts.who]+" · "+money(price(p));
   $("#modal").classList.add("show");
  }
  else if(act==="skip"){replaceStop(id,"Заменили:")}
