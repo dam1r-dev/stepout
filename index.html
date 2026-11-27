@@ -619,6 +619,41 @@ function computeTimes(route,o,start){
  return route;
 }
 
+// ===== оптимальный порядок: те же точки, минимум пути (с учётом часов работы) =====
+function pathKm(list){var cur=START,k=0;list.forEach(function(p){k+=dist(cur,p);cur=p});return k}
+function timeline(list,o){
+ var cur=START,r=list.map(function(p){var x={p:p,tr:travel(cur,p,o.mode),why:[]};cur=p;return x});
+ return computeTimes(r,o,o.start);
+}
+function fits(r,o){return r.every(function(x){return x.arrive>=x.p.o&&x.leave<=x.p.c&&x.leave<=o.start+o.hours*60})}
+function bestOrder(list,o){
+ var n=list.length,best=null,bk=Infinity,used=[],seq=[];
+ // ветви и границы: точек в маршруте не больше 9, перебор быстрый
+ (function go(cur,t,km){
+  if(km>=bk)return;
+  if(seq.length===n){bk=km;best=seq.slice();return}
+  for(var i=0;i<n;i++){
+   if(used[i])continue;
+   var p=list[i],arr=t+travel(cur,p,o.mode);
+   var wait=p.tk?0:(p.q?Math.max(2,Math.round(p.q*.15)):0),leave=arr+wait+dur(p,o);
+   if(arr<p.o||leave>p.c||leave>o.start+o.hours*60)continue;
+   used[i]=1;seq.push(p);go(p,leave,km+dist(cur,p));seq.pop();used[i]=0;
+  }
+ })(START,o.start,0);
+ return best;
+}
+function optimize(){
+ var o=state.opts,list=state.route.map(function(r){return r.p});
+ if(list.length<3){render(null,"В маршруте меньше трёх точек — он уже оптимален.");return}
+ var before=pathKm(list),order=bestOrder(list,o);
+ if(!order||pathKm(order)>=before-0.05){render(null,"Маршрут уже оптимальный: около "+before.toFixed(1)+" км. Короче не получается без нарушения часов работы.");return}
+ var after=pathKm(order),why={};
+ state.route.forEach(function(r){why[r.p.id]=r.why});
+ state.route=timeline(order,o);
+ state.route.forEach(function(r){r.why=why[r.p.id]});
+ render(null,"🧭 Порядок оптимизирован: "+before.toFixed(1)+" км → "+after.toFixed(1)+" км, на "+(before-after).toFixed(1)+" км меньше "+(o.mode==="walk"?"пешком":"в пути")+".");
+}
+
 function stats(route,o){
  var saved=0,cost=0,km=0,co2=0;
  route.forEach(function(r,i){saved+=r.saved;cost+=price(r.p);var k=r.tr*(o.mode==="walk"?.08:o.mode==="bike"?.25:.4);km+=k;});
@@ -678,11 +713,12 @@ function render(changedId,msg){
  var s=stats(route,o);
  var html='<div class="alert'+(msg?" show":"")+'">'+(msg?esc(msg):"")+'</div>';
  html+='<div class="summary">'+
-  '<div class="stat"><b>'+route.length+'</b><small>точек</small></div>'+
+  '<div class="stat"><b>'+route.length+'</b><small>точек · '+pathKm(route.map(function(r){return r.p})).toFixed(1)+' км пути</small></div>'+
   '<div class="stat"><b>−'+s.saved+' мин</b><small>очередей и пробок</small></div>'+
   '<div class="stat"><b>'+(s.cost?money(s.cost):"0 ₸")+'</b><small>билеты</small></div>'+
   '<div class="stat"><b>'+(o.mode==="car"?"🚗":"−"+s.savedCo2.toFixed(1)+" кг")+'</b><small>'+(o.mode==="car"?"попробуйте пешком":"CO₂ vs авто")+'</small></div>'+
  '</div>';
+ html+='<button class="btn" data-act="optimize" style="width:100%;margin-bottom:16px">🧭 Оптимальный маршрут — меньше ходить</button>';
  html+='<div class="mapbox"><div id="map"></div></div>';
  html+='<div class="tl">';
  route.forEach(function(r,i){
@@ -754,6 +790,7 @@ $("#result").addEventListener("click",function(e){
   $("#modal").classList.add("show");
  }
  else if(act==="skip"){replaceStop(id,"Заменили:")}
+ else if(act==="optimize"){optimize()}
  else if(act==="break"){
   var c=state.route.filter(function(r){return r.p.q>0||!r.p.in});
   var t=(c.length?c:state.route)[Math.floor(Math.random()*(c.length||state.route.length))];
