@@ -445,8 +445,8 @@ document.addEventListener("DOMContentLoaded",function(){
 <section id="add-place"><div class="wrap">
  <div class="eyebrow">Добавить место</div>
  <h2>Знаете классное место? Поделитесь</h2>
- <p class="lead">Кофейня, мастерская, дворик или смотровая — отправьте заявку. Модератор проверит её, и место появится на сайте и в маршрутах.</p>
- <div class="flow"><div>1. Заполните форму</div><i>→</i><div>2. Отправьте в WhatsApp с фото</div><i>→</i><div>3. Модерация</div><i>→</i><div><b style="color:var(--acc)">4. Место на сайте</b></div></div>
+ <p class="lead">Кофейня, мастерская, дворик или смотровая — добавьте, и место сразу появится в списке ниже и сможет попасть в ваш маршрут.</p>
+ <div class="flow"><div>1. Заполните форму</div><i>→</i><div>2. Отметьте точку на карте</div><i>→</i><div><b style="color:var(--acc)">3. Место на странице</b></div></div>
  <div class="addgrid">
   <form id="addForm" novalidate>
    <label>Название *<input name="n" maxlength="60" placeholder="Например, кофейня у парка"></label>
@@ -469,13 +469,13 @@ document.addEventListener("DOMContentLoaded",function(){
    <div id="addMap"></div>
    <div class="addacts"><button type="button" class="btn sm ghost" id="addGeo">📍 Я сейчас здесь</button><span id="addCoords">Точка не выбрана</span></div>
    <div class="adderr" id="addErr"></div>
-   <button type="button" class="btn" id="addSend" style="width:100%">Отправить на модерацию</button>
+   <button type="button" class="btn" id="addSend" style="width:100%">➕ Добавить место</button>
    <div id="addDone"></div>
   </div>
  </div>
- <div id="myPlaces"></div>
- <h3 class="disp" style="margin-top:50px;font-size:20px">Места от жителей</h3>
+ <h3 class="disp" style="margin-top:50px;font-size:20px">Добавленные места</h3>
  <div class="grid g3" id="userPlaces"><p style="color:var(--mut)">Пока пусто — добавьте первое место.</p></div>
+ <p style="color:var(--mut);font-size:13px;margin-top:16px">Демо: добавленные вами места сохраняются в этом браузере.</p>
 </div></section>
 
 <section id="partners"><div class="wrap">
@@ -885,11 +885,12 @@ $("#result").addEventListener("click",function(e){
 $("#mClose").addEventListener("click",function(){$("#modal").classList.remove("show")});
 $("#modal").addEventListener("click",function(e){if(e.target===this)this.classList.remove("show")});
 
-// ===== добавить место (с модерацией) =====
+// ===== добавить место (сразу, без модерации) =====
 (function(){
  var form=$("#addForm");if(!form)return;
- var KEY="stepout_submissions",PHONE="77057276368",point=null,amap=null,marker=null;
+ var KEY="stepout_places",point=null,amap=null,marker=null,photo="",reading=false,shared=[];
  var TYPES={food:"Кафе и еда",culture:"Культура",nature:"Природа",local:"Локальное",eco:"Эко"};
+ function clearPoint(){point=null;$("#addCoords").textContent="Точка не выбрана";if(marker){amap.removeLayer(marker);marker=null}}
  function setPoint(lat,lng){
   point={lat:+lat.toFixed(5),lng:+lng.toFixed(5)};
   $("#addCoords").textContent="✓ "+point.lat+", "+point.lng;
@@ -907,49 +908,78 @@ $("#modal").addEventListener("click",function(e){if(e.target===this)this.classLi
   navigator.geolocation.getCurrentPosition(function(g){setPoint(g.coords.latitude,g.coords.longitude);if(amap)amap.setView([point.lat,point.lng],16)},
    function(){$("#addCoords").textContent="Не удалось определить — выберите точку на карте"},{timeout:10000});
  });
+ // фото уменьшаем, чтобы поместилось в память браузера
  $("#addPhoto").addEventListener("change",function(){
   var f=this.files&&this.files[0],img=$("#addPreview");
-  if(img.src)URL.revokeObjectURL(img.src);
-  if(f&&/^image\//.test(f.type)){img.src=URL.createObjectURL(f);img.hidden=false}else{img.removeAttribute("src");img.hidden=true}
+  photo="";img.removeAttribute("src");img.hidden=true;reading=false;
+  if(!f||!/^image\//.test(f.type))return;
+  reading=true;
+  var url=URL.createObjectURL(f),src=new Image();
+  src.onload=function(){
+   var k=Math.min(1,800/Math.max(src.width,src.height)),c=document.createElement("canvas");
+   c.width=Math.max(1,Math.round(src.width*k));c.height=Math.max(1,Math.round(src.height*k));
+   c.getContext("2d").drawImage(src,0,0,c.width,c.height);
+   photo=c.toDataURL("image/jpeg",.72);img.src=photo;img.hidden=false;reading=false;URL.revokeObjectURL(url);
+  };
+  src.onerror=function(){reading=false;URL.revokeObjectURL(url);$("#addErr").textContent="Это фото не открылось — выберите другое (JPG или PNG)."};
+  src.src=url;
  });
  form.addEventListener("submit",function(e){e.preventDefault()});
- function mine(){try{var v=JSON.parse(localStorage.getItem(KEY));return Array.isArray(v)?v:[]}catch(e){return[]}}
- function drawMine(){
-  var m=mine();
-  $("#myPlaces").innerHTML=m.length?'<h3 class="disp" style="margin-top:40px;font-size:20px">Ваши заявки</h3><div class="pills">'+m.map(function(x){return'<span class="pill warn">⏳ '+esc(x.n)+' — на модерации</span>'}).join("")+'</div>':"";
+
+ function mins(v,def){var m=/^(\d{1,2}):(\d{2})$/.exec(v||"");return m?+m[1]*60+ +m[2]:def}
+ function valid(x){return x&&x.n&&TYPES.hasOwnProperty(x.t)&&typeof x.lat==="number"&&typeof x.lng==="number"&&isFinite(x.lat)&&isFinite(x.lng)}
+ function toRoute(x,id){
+  var o=mins(x.open,0),c=mins(x.close,1440);if(c<=o)c=1440;
+  PLACES.push({id:id,n:String(x.n),t:x.t,"in":!!x["in"],d:40,p:[1,2,3].indexOf(+x.p)>=0?+x.p:1,q:0,tk:0,lat:x.lat,lng:x.lng,o:o,c:c,hid:1,user:1,st:String(x.about||"Место добавлено жителями города.")});
  }
+ var local=[];
+ try{var v=JSON.parse(localStorage.getItem(KEY));if(Array.isArray(v))local=v.filter(function(x){return valid(x)&&x.id>=2000})}catch(e){}
+ local.forEach(function(x){toRoute(x,x.id)});
+ function store(){try{localStorage.setItem(KEY,JSON.stringify(local));return true}catch(e){return false}}
+ function card(x,own){
+  var ok=/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(x.photo||"")||/^photos\/[\w.-]+$/.test(x.photo||"");
+  return '<div class="card"'+(own?' id="up'+(+x.id)+'"':'')+'>'+(ok?'<img class="uphoto" src="'+x.photo+'" alt="'+esc(x.n)+'">':'')+
+   '<h3>'+esc(x.n)+'</h3><p>'+esc(x.about||"")+'</p><p style="margin-top:8px">📍 '+esc(x.address||"")+'<br>🕒 '+esc(x.open||"—")+'–'+esc(x.close||"—")+'</p>'+
+   '<div style="margin:10px 0"><span class="tag">'+TYPES[x.t]+'</span><span class="tag">'+"₸₸₸".slice(0,[1,2,3].indexOf(+x.p)>=0?+x.p:1)+'</span></div>'+
+   '<div class="qacts"><a class="btn sm ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination='+(+x.lat)+','+(+x.lng)+'">Как дойти</a>'+
+   (own?'<button type="button" class="btn sm ghost" data-del="'+(+x.id)+'">Удалить</button>':'')+'</div></div>';
+ }
+ function draw(){
+  var html=local.slice().reverse().map(function(x){return card(x,true)}).join("")+shared.map(function(x){return card(x,false)}).join("");
+  $("#userPlaces").innerHTML=html||'<p style="color:var(--mut)">Пока пусто — добавьте первое место.</p>';
+ }
+ $("#userPlaces").addEventListener("click",function(e){
+  var b=e.target.closest("[data-del]");if(!b)return;
+  var id=+b.dataset.del;
+  local=local.filter(function(x){return x.id!==id});
+  for(var i=PLACES.length-1;i>=0;i--)if(PLACES[i].id===id)PLACES.splice(i,1);
+  store();draw();$("#addDone").textContent="";
+ });
  $("#addSend").addEventListener("click",function(){
   var f=form.elements,err=$("#addErr");
-  var d={n:f.n.value.trim(),t:f.t.value,address:f.address.value.trim(),lat:point&&point.lat,lng:point&&point.lng,open:f.open.value,close:f.close.value,p:+f.p.value,"in":f["in"].value==="1",about:f.about.value.trim(),photo:""};
+  var d={n:f.n.value.trim(),t:f.t.value,address:f.address.value.trim(),lat:point&&point.lat,lng:point&&point.lng,open:f.open.value,close:f.close.value,p:+f.p.value,"in":f["in"].value==="1",about:f.about.value.trim(),photo:photo};
   var miss=[];if(!d.n)miss.push("название");if(!d.address)miss.push("адрес");if(!d.about)miss.push("описание");if(!point)miss.push("точку на карте");
   if(miss.length){err.textContent="Заполните: "+miss.join(", ")+".";return}
+  if(reading){err.textContent="Фото ещё загружается — нажмите ещё раз через секунду.";return}
   err.textContent="";
-  var hasPhoto=$("#addPhoto").files.length>0;
-  var text="StepOut: новое место на модерацию\n\nНазвание: "+d.n+"\nТип: "+TYPES[d.t]+"\nАдрес: "+d.address+"\nЧасы: "+(d.open||"—")+"–"+(d.close||"—")+"\nОписание: "+d.about+"\nКарта: https://www.openstreetmap.org/?mlat="+d.lat+"&mlon="+d.lng+"#map=17/"+d.lat+"/"+d.lng+(hasPhoto?"\nФото: прикреплю следующим сообщением":"")+"\n\nКод для places.json:\n"+JSON.stringify(d);
-  var url="https://wa.me/"+PHONE+"?text="+encodeURIComponent(text);
-  var list=mine();list.push({n:d.n,at:Date.now()});try{localStorage.setItem(KEY,JSON.stringify(list.slice(-10)))}catch(e){}
-  drawMine();
-  $("#addDone").innerHTML='✅ Заявка готова. Нажмите «Отправить» в WhatsApp'+(hasPhoto?' и <b>прикрепите фото в тот же чат</b>':'')+'. <a href="'+esc(url)+'" target="_blank" rel="noopener" style="color:var(--acc)">WhatsApp не открылся?</a>';
-  window.open(url,"_blank","noopener");
+  d.id=Math.max(Date.now(),2000);
+  local.push(d);toRoute(d,d.id);
+  var note="";
+  if(!store()){d.photo="";note=store()?" Фото не поместилось в память браузера и после перезагрузки пропадёт.":" Браузер не даёт сохранить — после перезагрузки место пропадёт.";d.photo=photo}
+  draw();
+  form.reset();photo="";$("#addPreview").hidden=true;$("#addPreview").removeAttribute("src");clearPoint();
+  $("#addDone").textContent="✅ Место «"+d.n+"» добавлено."+note;
+  var el=$("#up"+d.id);if(el)el.scrollIntoView({behavior:"smooth",block:"center"});
  });
- drawMine();
-
- // одобренные модератором места из places.json
- function mins(v,def){var m=/^(\d{1,2}):(\d{2})$/.exec(v||"");return m?+m[1]*60+ +m[2]:def}
+ draw();
+ // общие места, видимые всем посетителям (файл places.json)
  if(window.fetch)fetch("places.json",{cache:"no-store"}).then(function(r){return r.ok?r.json():[]}).then(function(list){
   if(!Array.isArray(list))return;
-  var html="";
-  list.forEach(function(x,i){
-   if(!x||!x.n||!TYPES[x.t]||!isFinite(x.lat)||!isFinite(x.lng)||x.lat===null||x.lng===null)return;
-   var o=mins(x.open,0),c=mins(x.close,1440);if(c<=o)c=1440;
-   PLACES.push({id:1000+i,n:String(x.n),t:x.t,"in":!!x["in"],d:40,p:[1,2,3].indexOf(+x.p)>=0?+x.p:1,q:0,tk:0,lat:+x.lat,lng:+x.lng,o:o,c:c,hid:1,user:1,st:String(x.about||"Место добавлено жителями города.")});
-   var ph=/^photos\/[\w.-]+$/.test(x.photo||"")?'<img class="uphoto" loading="lazy" src="'+x.photo+'" alt="'+esc(x.n)+'">':"";
-   html+='<div class="card">'+ph+'<h3>'+esc(x.n)+'</h3><p>'+esc(x.about||"")+'</p><p style="margin-top:8px">📍 '+esc(x.address||"")+'<br>🕒 '+esc(x.open||"—")+'–'+esc(x.close||"—")+'</p><div style="margin-top:10px"><span class="tag">'+TYPES[x.t]+'</span><span class="tag">✓ Проверено модератором</span></div></div>';
-  });
-  if(html)$("#userPlaces").innerHTML=html;
+  shared=list.filter(valid);
+  shared.forEach(function(x,i){toRoute(x,1000+i)});
+  draw();
  }).catch(function(){});
 })();
-
 
 // ===== квест-рулетка =====
 (function(){
