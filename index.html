@@ -149,6 +149,23 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 .grp .btn{width:100%;margin-top:12px}
 .grp.joined{border-color:var(--acc)}
 .grp.hide{display:none}
+#qmap{height:340px;width:100%;background:#111;border:1px solid var(--line);border-radius:20px;overflow:hidden;position:relative;z-index:0}
+#qmap .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.85) saturate(.6)}
+.qstart{text-align:center;padding:40px 20px;border:1px dashed rgba(95,211,154,.45);border-radius:20px}
+.qdice{font-size:64px;display:inline-block;margin-bottom:14px}
+.qdice.spin{animation:qspin .5s linear infinite}
+@keyframes qspin{to{transform:rotate(360deg)}}
+.qname{font-family:Unbounded,sans-serif;min-height:2.6em;color:var(--mut);margin-bottom:14px}
+.qgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.qstep{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:10px}
+.qstep h4{font-size:16px}
+.qstep small{color:var(--mut)}
+.qstep.now{border-color:var(--acc)}
+.qstep.lock{opacity:.5;border-style:dashed}
+.qtask{margin:10px 0 12px;background:#0d1510;border-radius:12px;padding:12px}
+.qacts{display:flex;gap:8px;flex-wrap:wrap}
+.qtop{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px;font-family:Unbounded,sans-serif;font-size:14px}
+@media(max-width:900px){.qgrid{grid-template-columns:1fr}}
 /* ===== animations ===== */
 .js .reveal{opacity:0;transform:translateY(28px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
 .js .reveal.in{opacity:1;transform:none}
@@ -210,7 +227,7 @@ document.addEventListener("DOMContentLoaded",function(){
 <nav><div class="wrap">
  <a href="#top" class="logo">Step<span>Out</span></a>
  <div class="links">
-  <a href="#problem">Проблема</a><a href="#solution">Решение</a><a href="#demo">Демо</a><a href="#eco">Эко</a><a href="#company-find">Компания</a><a href="#partners">Партнёрам</a><a href="#qr">QR</a>
+  <a href="#problem">Проблема</a><a href="#solution">Решение</a><a href="#demo">Демо</a><a href="#quest">Квест</a><a href="#eco">Эко</a><a href="#company-find">Компания</a><a href="#partners">Партнёрам</a><a href="#qr">QR</a>
  </div>
  <a href="#demo" class="btn sm">Попробовать демо</a>
 </div></nav>
@@ -222,6 +239,7 @@ document.addEventListener("DOMContentLoaded",function(){
  <p class="lead">Маршрут, пробки, очереди, онлайн-билеты и эко-сценарии — в одном экране. Без пяти вкладок и без сорока минут в кассу.</p>
  <div class="cta">
   <a href="#demo" class="btn">Собрать маршрут →</a>
+  <a href="#quest" class="btn ghost">🎲 Квест-рулетка</a>
   <a href="#solution" class="btn ghost">Как это работает</a>
  </div>
  <div class="stats">
@@ -338,6 +356,13 @@ document.addEventListener("DOMContentLoaded",function(){
    <div class="empty">Настройте параметры слева и нажмите <b>«Построить маршрут»</b></div>
   </div>
  </div>
+</div></section>
+
+<section id="quest"><div class="wrap">
+ <div class="eyebrow">Квест-рулетка на 90 минут</div>
+ <h2>Куда идти — решит рулетка</h2>
+ <p class="lead">Четыре тайные точки Алматы пешком. Следующая открывается только после задания в предыдущей.</p>
+ <div id="questBox" style="margin-top:30px"></div>
 </div></section>
 
 <section id="eco"><div class="wrap">
@@ -807,6 +832,121 @@ $("#result").addEventListener("click",function(e){
 });
 $("#mClose").addEventListener("click",function(){$("#modal").classList.remove("show")});
 $("#modal").addEventListener("click",function(e){if(e.target===this)this.classList.remove("show")});
+
+// ===== квест-рулетка =====
+(function(){
+ var box=$("#questBox");if(!box)return;
+ function byId(id){return PLACES.filter(function(p){return p.id===id})[0]}
+ var POOL=[
+  [1,"Найдите у музея деталь с национальным орнаментом и сфотографируйте её."],
+  [3,"Рассмотрите фасад театра и посчитайте колонны у главного входа."],
+  [15,"Найдите у монумента фигуру Золотого человека и повторите его позу для фото."],
+  [33,"Найдите памятник Абаю и вспомните вместе хотя бы одну его строчку или факт о нём."],
+  [5,"Спросите у продавца, что взять с собой в дорогу, и узнайте, из какого это региона."],
+  [10,"Найдите в парке самое большое дерево и сделайте фото всей компанией рядом."],
+  [16,"Посмотрите на купол снаружи и найдите, откуда он виден лучше всего."],
+  [21,"Найдите у деревянного здания музея резной узор и сфотографируйте его."],
+  [22,"Найдите уличного художника или музыканта и поддержите его добрым словом."],
+  [23,"Сравните здания вокруг площади и угадайте, какое из них самое старое."],
+  [32,"Найдите на здании «Арасана» круглые купола и посчитайте, сколько их видно."]
+ ].map(function(x){return{p:byId(x[0]),task:x[1]}});
+ [
+  {n:"Мемориал Славы",lat:43.2580,lng:76.9547,task:"Постойте минуту у Вечного огня и найдите на монументе фигуры воинов."},
+  {n:"Вознесенский кафедральный собор",lat:43.2590,lng:76.9570,task:"Найдите самый яркий цвет на фасаде и куполах собора."},
+  {n:"Здание Академии наук",lat:43.2424,lng:76.9456,task:"Найдите перед зданием фонтан или сквер и выберите лучший ракурс для фото."},
+  {n:"ЦУМ и пешеходная зона",lat:43.2617,lng:76.9455,task:"Найдите вывеску или объект, который напоминает о старом Алматы."}
+ ].forEach(function(x){POOL.push({p:{n:x.n,lat:x.lat,lng:x.lng},task:x.task})});
+
+ var WALK_MAX=45,TASK_MIN=11,KEY="stepout_quest",qmap=null,combos=null,lastKey="",st=null,timer=null;
+ function perms(a){if(a.length<2)return[a];var out=[];a.forEach(function(x,i){perms(a.slice(0,i).concat(a.slice(i+1))).forEach(function(r){out.push([x].concat(r))})});return out}
+ function walkMin(order){var m=0;for(var i=1;i<order.length;i++){var a=POOL[order[i-1]].p,b=POOL[order[i]].p;if(dist(a,b)>2.5)return 1e9;m+=travel(a,b,"walk")}return m}
+ function km(order){var k=0;for(var i=1;i<order.length;i++)k+=dist(POOL[order[i-1]].p,POOL[order[i]].p);return k}
+ function allCombos(){
+  var n=POOL.length,out=[];
+  function close(a,b){return dist(POOL[a].p,POOL[b].p)<.2}
+  for(var a=0;a<n;a++)for(var b=a+1;b<n;b++)for(var c=b+1;c<n;c++)for(var d=c+1;d<n;d++){
+   if(close(a,b)||close(a,c)||close(a,d)||close(b,c)||close(b,d)||close(c,d))continue;
+   var best=null,bm=1e9;
+   perms([a,b,c,d]).forEach(function(o){var m=walkMin(o);if(m<bm){bm=m;best=o}});
+   if(bm<=WALK_MAX)out.push(best);
+  }
+  return out;
+ }
+ function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+ function load(){try{var v=JSON.parse(localStorage.getItem(KEY));if(v&&v.ids&&v.ids.length===4&&v.ids.every(function(i){return POOL[i]})&&Array.isArray(v.done))return v}catch(e){}return null}
+ function killMap(){if(qmap){qmap.remove();qmap=null}}
+ function home(){
+  killMap();
+  box.innerHTML='<div class="qstart"><span class="qdice" id="qdice">🎲</span><div class="qname" id="qname">4 точки · 4 задания · около 90 минут пешком</div><button class="btn" data-q="spin">Крутить рулетку</button></div>';
+ }
+ function spin(){
+  if(timer)return;
+  if(!$("#qdice"))home();
+  if(!combos)combos=allCombos();
+  var dice=$("#qdice"),name=$("#qname"),btn=$('[data-q="spin"]',box),n=0;
+  dice.classList.add("spin");btn.disabled=true;
+  timer=setInterval(function(){
+   name.textContent=POOL[Math.floor(Math.random()*POOL.length)].p.n;
+   if(++n<16)return;
+   clearInterval(timer);timer=null;
+   var pick,key,tries=0;
+   do{pick=combos[Math.floor(Math.random()*combos.length)].slice();if(Math.random()<.5)pick.reverse();key=pick.slice().sort().join(",")}while(key===lastKey&&++tries<20);
+   lastKey=key;st={ids:pick,done:[]};save();draw();
+  },90);
+ }
+ function draw(){
+  if(!st){home();return}
+  killMap();
+  var step=st.done.length,ok=st.done.filter(Boolean).length,total=walkMin(st.ids)+TASK_MIN*4;
+  if(step>=4){
+   var k=km(st.ids),rank=ok===4?"🏆 Свой в Алматы":ok>=2?"🥈 Городской исследователь":"🥉 Первые шаги";
+   box.innerHTML='<div class="qstart"><span class="qdice">🎉</span><h3 class="disp" style="font-size:24px;margin-bottom:18px">'+rank+'</h3>'+
+    '<div class="summary" style="grid-template-columns:repeat(3,1fr);max-width:620px;margin:0 auto 20px"><div class="stat"><b>'+(ok*25)+'</b><small>очков из 100</small></div><div class="stat"><b>'+k.toFixed(1)+' км</b><small>маршрут пешком</small></div><div class="stat"><b>−'+(k*.17).toFixed(1)+' кг</b><small>CO₂ vs авто</small></div></div>'+
+    '<button class="btn" data-q="again">🎲 Крутить ещё раз</button></div>';
+   return;
+  }
+  var html='<div class="qtop"><span>Точка '+(step+1)+' из 4</span><span style="color:var(--acc)">'+(ok*25)+' очков · ~'+total+' мин</span></div><div class="qgrid"><div id="qmap"></div><div>';
+  st.ids.forEach(function(id,i){
+   var q=POOL[id],p=q.p;
+   if(i<step)html+='<div class="qstep"><h4>'+(st.done[i]?"✅ ":"⏭ ")+esc(p.n)+'</h4><small>'+(st.done[i]?"+25 очков":"пропущено")+'</small></div>';
+   else if(i===step){
+    var tr=i?'🚶 '+travel(POOL[st.ids[i-1]].p,p,"walk")+' мин пешком':'Доберитесь до старта';
+    html+='<div class="qstep now"><h4>📍 '+esc(p.n)+'</h4><small>'+tr+'</small><div class="qtask">🎯 <b>Задание:</b> '+esc(q.task)+'</div><div class="qacts">'+
+     '<button class="btn sm" data-q="done">✓ Выполнено</button>'+
+     '<a class="btn sm ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination='+p.lat+','+p.lng+'&travelmode=walking">Как дойти</a>'+
+     '<button class="btn sm ghost" data-q="skip">Пропустить</button></div></div>';
+   } else html+='<div class="qstep lock"><h4>🔒 Тайная точка '+(i+1)+'</h4><small>откроется после задания</small></div>';
+  });
+  html+='<button class="btn sm ghost" data-q="again">🎲 Другой маршрут</button></div></div>';
+  box.innerHTML=html;
+  drawQ(st.ids.slice(0,step+1).map(function(id){return POOL[id].p}));
+ }
+ function drawQ(list){
+  var el=$("#qmap");
+  if(typeof L==="undefined"){el.innerHTML='<div class="empty" style="border:0">Карта не загрузилась — пользуйтесь кнопкой «Как дойти».</div>';return}
+  qmap=L.map(el,{scrollWheelZoom:false});qmap.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(qmap);
+  var pts=list.map(function(p){return[p.lat,p.lng]});
+  var line=L.polyline(pts,{color:"#5fd39a",weight:4,dashArray:"8 8",opacity:.6}).addTo(qmap);
+  list.forEach(function(p,i){L.marker([p.lat,p.lng],{icon:L.divIcon({className:"",html:'<div class="mk">'+(i+1)+'</div>',iconSize:[26,26],iconAnchor:[13,13]})}).addTo(qmap).bindTooltip(p.n)});
+  if(pts.length<2){qmap.setView(pts[0],15);return}
+  qmap.fitBounds(L.latLngBounds(pts),{padding:[40,40]});
+  var m=qmap;
+  fetch("https://routing.openstreetmap.de/routed-foot/route/v1/driving/"+list.map(function(p){return p.lng+","+p.lat}).join(";")+"?overview=full&geometries=geojson")
+   .then(function(r){if(!r.ok)throw 0;return r.json()})
+   .then(function(d){if(m!==qmap||!d.routes||!d.routes[0])return;m.removeLayer(line);L.polyline(d.routes[0].geometry.coordinates.map(function(c){return[c[1],c[0]]}),{color:"#5fd39a",weight:4,dashArray:"2 10",lineCap:"round"}).addTo(m)})
+   .catch(function(){});
+ }
+ box.addEventListener("click",function(e){
+  var b=e.target.closest("[data-q]");if(!b)return;
+  var a=b.dataset.q;
+  if(a==="spin")spin();
+  else if(a==="again"){st=null;try{localStorage.removeItem(KEY)}catch(err){}home();spin()}
+  else if(st&&st.done.length<4){st.done.push(a==="done");save();draw()}
+ });
+ st=load();draw();
+})();
+
 })();
 </script>
 <script>
